@@ -13,8 +13,13 @@
     "windows": [
       {
         "title": "rcade-client",
-        "width": 800,
-        "height": 600
+        "titleBarStyle": "Transparent",
+        "decorations": false,
+        "fullscreen": true,
+        "closable": false,
+        "maximizable": false,
+        "resizable": false,
+        "alwaysOnTop": true
       }
     ],
     "security": {
