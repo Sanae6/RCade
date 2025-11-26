@@ -1,5 +1,8 @@
 import * as z from "zod";
 import * as jose from "jose";
+import type { RecurseResponse } from "$lib/rc_oauth";
+import { RecurseAPI } from "$lib/recurse";
+import { env } from "$env/dynamic/private"
 
 const GITHUB_OIDC_ISSUER = "https://token.actions.githubusercontent.com";
 const GITHUB_OIDC_JWKS_URI = `${GITHUB_OIDC_ISSUER}/.well-known/jwks`;
@@ -27,20 +30,31 @@ const GithubOIDCClaims = z.object({
 type GithubOIDCClaims = z.infer<typeof GithubOIDCClaims>;
 
 export class GithubOIDCValidator {
-    private rc_pat: string;
+    private rcClient: RecurseAPI;
     private jwks: ReturnType<typeof jose.createRemoteJWKSet>; 
 
-    public constructor(rc_pat: string) {
-        this.rc_pat = rc_pat;
+    public constructor() {
+        this.rcClient = new RecurseAPI(env.RC_PAT);
         this.jwks = jose.createRemoteJWKSet(new URL(GITHUB_OIDC_JWKS_URI));
     }
 
-public async validate(jwt: string): Promise<GithubOIDCClaims> {
+    public async validate(jwt: string): Promise<GithubOIDCClaims & {recurser: RecurseResponse}> {
         const { payload } = await jose.jwtVerify(jwt, this.jwks, {
             issuer: GITHUB_OIDC_ISSUER,
-            // TODO more validation
+            // TODO more validation?
         });
+
+        const claims = GithubOIDCClaims.parse(payload);
+
+        const recurser = await this.rcClient.getUserByGithubId(claims.repository_owner);
+        if (!recurser) {
+            throw new Error("Recurser not found");
+        }
+
         
-        return GithubOIDCClaims.parse(payload);
+        return {
+            ...claims,
+            recurser,
+        };
     }
 }
