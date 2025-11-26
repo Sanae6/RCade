@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>rcade client</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>rcade client</h1>
+    <p class="info" id="versions"></p>
+  </div>
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
