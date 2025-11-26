@@ -1,0 +1,15 @@
+meta {
+  name: Get All Games
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{protocol}}://{{host}}{{api_base}}/games
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

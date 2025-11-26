@@ -1,22 +1,20 @@
 import type { RequestHandler } from "@sveltejs/kit";
-import { getDb } from '$lib/db';
-import { games } from '$lib/db/schema';
+import { Game } from "$lib/game";
+import * as auth from "@auth/sveltekit"
 
-export const GET: RequestHandler = async ({ platform }) => {
+export const GET: RequestHandler = async (event) => {
+    const session = await event.locals.auth();
+
+    const auth = session?.user ? { for: <const>"recurser", rc_id: session.user.rc_id } : { for: <const>"public" };
+
     try {
-        // Query all items from your table
-        const r = await getDb().select().from(games).all();
-        console.log(r); // Log the results to the console for debugging
-
         return new Response(
-            JSON.stringify(r),
-            {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            }
+            JSON.stringify((await Game.all()).map(game => game.intoResponse(auth)).filter(v => v !== undefined)),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
     } catch (error) {
         console.error('Database error:', error);
+
         return new Response(
             JSON.stringify({ error: 'Failed to fetch items' }),
             { status: 500, headers: { 'Content-Type': 'application/json' } }

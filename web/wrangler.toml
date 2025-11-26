@@ -2,6 +2,7 @@ name = "rcade"
 compatibility_date = "2024-11-25"
 main = ".svelte-kit/cloudflare/_worker.js"
 account_id = "9aee291c8fc8a03f6dacc66454177c60"
+compatibility_flags = [ "nodejs_compat" ]
 
 [build]
 command = "bun x vite build"
@@ -14,4 +15,8 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "rcade"
 database_id = "c74c6e00-e3b7-4f18-aad1-76fa8b901d6c"
-"migrations_dir" = "drizzle/migrations"
+migrations_dir = "drizzle/migrations"
+
+[[r2_buckets]]
+binding = "STORE"
+bucket_name = "rcade"

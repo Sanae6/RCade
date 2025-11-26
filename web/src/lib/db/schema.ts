@@ -21,3 +21,10 @@ export const gameAuthors = sqliteTable('game_authors', {
 export const gamesRelations = relations(games, ({ many }) => ({
     authors: many(gameAuthors),
 }));
+
+export const gameAuthorsRelations = relations(gameAuthors, ({ one }) => ({
+    game: one(games, {
+        fields: [gameAuthors.gameId],
+        references: [games.id],
+    }),
+}));
