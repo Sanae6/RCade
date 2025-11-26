@@ -1,5 +1,5 @@
 {
-  "name": "rcade-client",
+  "name": "@rcade/client",
   "version": "0.1.0",
   "description": "",
   "type": "module",
