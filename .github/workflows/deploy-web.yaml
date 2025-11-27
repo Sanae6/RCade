@@ -1,0 +1,42 @@
+name: Deploy Web Server
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'api/**'
+      - 'web/**'
+      - 'runtime/**'
+      - 'bun.lock'
+      - 'bun.lockb'
+      - 'package.json'
+    
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Web
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Apply Migrations
+        run: bun run db:migrate:remote
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy
+        run: bun run deploy
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
