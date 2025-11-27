@@ -78,6 +78,7 @@ export class Game {
             gameId: this.data.id,
             version,
 
+            displayName: manifest.display_name,
             description: manifest.description,
             visibility: manifest.visibility,
         });
@@ -133,6 +134,7 @@ export class Game {
             }
 
             return {
+                displayName: version.displayName,
                 description: version.description,
                 visibility: version.visibility,
                 version: version.version,

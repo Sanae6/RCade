@@ -18,6 +18,7 @@ export const gameAuthors = sqliteTable('game_authors', {
 
 export const gameVersions = sqliteTable('game_versions', {
     gameId: text("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
+    displayName: text("display_name"),
     description: text("description").notNull(),
     visibility: text("visibility", { enum: ["public", "private", "personal"] }).notNull(),
     version: text("version").notNull().unique(),
