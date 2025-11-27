@@ -29,5 +29,6 @@
     background: #0a0a14;
     color: #fff;
     font-family: system-ui, -apple-system, sans-serif;
+    cursor: none;
   }
 </style>
