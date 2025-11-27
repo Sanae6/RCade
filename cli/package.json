@@ -1,21 +1,34 @@
 {
   "name": "rcade",
-  "type": "module",
   "version": "0.0.1",
-  "description": "A CLI tool to generate a new rcade project",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/js-yaml": "^4.0.9",
+    "@types/mustache": "^4.2.6",
+    "@types/terminal-kit": "^2.5.7"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
   "bin": {
     "rcade": "./dist/index.js"
   },
+  "description": "A CLI tool to generate a new rcade project",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "bun build index.ts --outdir dist --target node"
   },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+  "type": "module",
+  "dependencies": {
+    "@badgateway/oauth2-client": "^3.3.1",
+    "enquirer": "^2.4.1",
+    "execa": "^9.6.0",
+    "fdir": "^6.5.0",
+    "js-yaml": "^4.1.1",
+    "mustache": "^4.2.0",
+    "rcade": "workspace:*",
+    "terminal-kit": "^3.1.2"
   }
 }

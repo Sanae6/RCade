@@ -2,3 +2,4 @@
 - github orgs will break everything :(
 - we dont limit file size :(
 - errors are just a string :(
+- nobody will ever use the rc_id field until the cli is not sucky :(
