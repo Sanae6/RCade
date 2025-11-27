@@ -13,7 +13,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
         let response = undefined;
 
         if (game !== undefined) {
-            response = game.intoResponse(auth);
+            response = await game.intoResponse(auth, { withR2Key: true });
         }
 
         if (response === undefined) {

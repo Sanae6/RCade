@@ -32,10 +32,10 @@ export const POST: RequestHandler = async ({ params, request }) => {
             game = await Game.new(manifest.name, auth);
         }
 
-        const { upload_url } = await game.publishVersion(manifest);
+        const { upload_url, expires } = await game.publishVersion(manifest);
 
         return new Response(
-            JSON.stringify({ upload_url }),
+            JSON.stringify({ upload_url, expires }),
             { status: 200, headers: { 'Content-Type': 'application/json' } }
         );
     } catch (error) {

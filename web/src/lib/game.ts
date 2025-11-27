@@ -6,7 +6,7 @@ import * as z from "zod";
 import { Manifest } from "./manifest";
 import type { R2Bucket } from "@cloudflare/workers-types";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "$env/dynamic/private";
 import type { RecurseResponse } from "./rc_oauth";
 
@@ -14,6 +14,15 @@ export enum GitUrlKind {
     Https,
     Ssh,
 }
+
+const S3 = new S3Client({
+    region: "auto",
+    endpoint: env.BUCKET_S3_ENDPOINT!,
+    credentials: {
+        accessKeyId: env.BUCKET_ACCESS_KEY!,
+        secretAccessKey: env.BUCKET_ACCESS_KEY_SECRET!,
+    },
+});
 
 export class Game {
     public static async all(): Promise<Game[]> {
@@ -59,7 +68,7 @@ export class Game {
 
     private constructor(private data: InferSelectModel<typeof games> & { versions: (InferSelectModel<typeof gameVersions> & { authors: InferSelectModel<typeof gameAuthors>[] })[] }) { }
 
-    public async publishVersion(manifest: z.infer<typeof Manifest>): Promise<{ upload_url: string }> {
+    public async publishVersion(manifest: z.infer<typeof Manifest>): Promise<{ upload_url: string, expires: number }> {
         const version = manifest.version as string | undefined ?? "1.0.0";
 
         await getDb().insert(gameVersions).values({
@@ -81,19 +90,12 @@ export class Game {
         })));
 
         const upload_url = await getSignedUrl(
-            new S3Client({
-                region: "auto",
-                endpoint: env.BUCKET_S3_ENDPOINT!,
-                credentials: {
-                    accessKeyId: env.BUCKET_ACCESS_KEY!,
-                    secretAccessKey: env.BUCKET_ACCESS_KEY_SECRET!,
-                },
-            }),
+            S3,
             new PutObjectCommand({ Bucket: "rcade", Key: `games/builds/${this.data.id}/${manifest.version}.tar.gz` }),
             { expiresIn: 3600 }
         );
 
-        return { upload_url }
+        return { upload_url, expires: (Date.now() + 3600) }
     }
 
     public gitUrl(kind: GitUrlKind = GitUrlKind.Https) {
@@ -103,11 +105,24 @@ export class Game {
         }
     }
 
-    public intoResponse(auth: { for: "recurser", rc_id: string } | { for: "public" }): object | undefined {
-        const versions = this.data.versions.map(version => {
+    public async intoResponse(auth: { for: "recurser", rc_id: string } | { for: "public" }, config: { withR2Key: boolean } = { withR2Key: false }): Promise<object | undefined> {
+        const versions = await Promise.all(this.data.versions.map(async version => {
             if (version.visibility !== "public") {
                 if (auth.for === "public" || auth.rc_id !== this.data.owner_rc_id)
                     return undefined;
+            }
+
+            const r2Key: Record<string, any> = {};
+
+            if (config.withR2Key) {
+                r2Key["contents"] = {
+                    url: await getSignedUrl(
+                        S3,
+                        new GetObjectCommand({ Bucket: "rcade", Key: `games/builds/${this.data.id}/${version.version}.tar.gz` }),
+                        { expiresIn: 3600 }
+                    ),
+                    expires: Date.now() + (3600 * 1000),
+                };
             }
 
             return {
@@ -115,8 +130,9 @@ export class Game {
                 visibility: version.visibility,
                 version: version.version,
                 authors: version.authors.map(v => ({ display_name: v.display_name, recurse_id: v.recurse_id })),
+                ...r2Key,
             }
-        });
+        }));
 
         if (versions.length == 0) {
             return undefined;
