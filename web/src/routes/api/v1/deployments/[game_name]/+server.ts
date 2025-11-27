@@ -4,6 +4,7 @@ import { games } from "$lib/db/schema";
 import { Game } from "$lib/game";
 import { Manifest } from "@rcade/api";
 import type { RequestHandler } from "@sveltejs/kit";
+import semver from "semver";
 
 const VALIDATOR = new GithubOIDCValidator();
 
@@ -27,12 +28,30 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
         const manifest = Manifest.parse(await request.json());
         let game = await Game.byName(params.game_name ?? "");
+        let version = undefined;
 
         if (game == undefined) {
+            version = manifest.version ?? "1.0.0";
             game = await Game.new(manifest.name, auth);
+        } else {
+            version = manifest.version;
+
+            if (version == undefined) {
+                const latest = await game.latestVersionNumber();
+
+                if (latest == undefined) {
+                    version = "1.0.0";
+                } else {
+                    version = semver.inc(latest, "patch");
+
+                    if (version == null) {
+                        throw new Error("Failed to bump version?");
+                    }
+                }
+            }
         }
 
-        const { upload_url, expires } = await game.publishVersion(manifest);
+        const { upload_url, expires } = await game.publishVersion(version, manifest);
 
         return new Response(
             JSON.stringify({ upload_url, expires }),

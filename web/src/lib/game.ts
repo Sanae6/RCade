@@ -9,6 +9,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { env } from "$env/dynamic/private";
 import type { RecurseResponse } from "./rc_oauth";
+import semver from "semver";
 
 export enum GitUrlKind {
     Https,
@@ -68,8 +69,10 @@ export class Game {
 
     private constructor(private data: InferSelectModel<typeof games> & { versions: (InferSelectModel<typeof gameVersions> & { authors: InferSelectModel<typeof gameAuthors>[] })[] }) { }
 
-    public async publishVersion(manifest: z.infer<typeof Manifest>): Promise<{ upload_url: string, expires: number }> {
-        const version = manifest.version as string | undefined ?? "1.0.0";
+    public async publishVersion(version: string, manifest: z.infer<typeof Manifest>): Promise<{ upload_url: string, expires: number }> {
+        if (manifest.version !== undefined && manifest.version !== version) {
+            throw new Error("Version mismatch");
+        }
 
         await getDb().insert(gameVersions).values({
             gameId: this.data.id,
@@ -152,5 +155,9 @@ export class Game {
             owner_rc_id: this.data.owner_rc_id,
             versions,
         }
+    }
+
+    public async latestVersionNumber() {
+        return semver.sort(this.data.versions.map(v => v.version)).pop()
     }
 }
