@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { integer, numeric, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, numeric, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core';
 
 export const games = sqliteTable('games', {
     id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -21,8 +21,10 @@ export const gameVersions = sqliteTable('game_versions', {
     displayName: text("display_name"),
     description: text("description").notNull(),
     visibility: text("visibility", { enum: ["public", "private", "personal"] }).notNull(),
-    version: text("version").notNull().unique(),
-})
+    version: text("version").notNull(),
+}, (t) => [
+    unique().on(t.gameId, t.version),
+])
 
 export const gamesRelations = relations(games, ({ many }) => ({
     versions: many(gameVersions),
