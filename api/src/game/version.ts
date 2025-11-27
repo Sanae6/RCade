@@ -23,4 +23,8 @@ export class GameVersion {
 
         return this.apiResponse.contents.url
     }
+
+    public dependencies(): { name: string, version: string }[] {
+        return this.apiResponse.dependencies;
+    }
 }

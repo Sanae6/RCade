@@ -10,6 +10,7 @@ import { Hono } from 'hono';
 import { Client, Game } from '@rcade/api';
 import * as tar from 'tar';
 import type { GameInfo, LoadGameResult } from '../shared/types';
+import { rcadeInputClassic } from '../plugins/rcade-input-classic';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -167,10 +168,11 @@ app.whenReady().then(async () => {
       name: game.name(),
       latestVersion: game.latest().version(),
       contentUrl: game.latest().contentUrl(),
+      dependencies: game.latest().dependencies(),
     }));
   });
 
-  ipcMain.handle('load-game', async (_event, game: GameInfo): Promise<LoadGameResult> => {
+  ipcMain.handle('load-game', async (event, game: GameInfo): Promise<LoadGameResult> => {
     const { id, latestVersion } = game;
 
     const cached = await isGameCached(id, latestVersion);
@@ -186,7 +188,16 @@ app.whenReady().then(async () => {
     }
 
     const port = await startGameServer(id, latestVersion);
-    return { url: `http://localhost:${port}` };
+
+    const pluginPorts: Record<string, Record<string, MessagePort>> = {};
+
+    if (game.dependencies.findIndex(v => v.name === "@rcade/input-classic" && v.version === "1.0.0") != -1) {
+      pluginPorts["@rcade/input-classic"] = {
+        "1.0.0": rcadeInputClassic(event.sender)
+      }
+    }
+
+    return { url: `http://localhost:${port}`, pluginPorts };
   });
 
   ipcMain.handle('unload-game', async (_event, gameId: string, version: string): Promise<void> => {

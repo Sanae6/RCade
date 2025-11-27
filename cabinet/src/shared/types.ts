@@ -12,10 +12,15 @@ export interface GameInfo {
   id: string;
   name: string;
   latestVersion: string;
+  dependencies: {
+    name: string,
+    version: string,
+  }[];
 }
 
 export interface LoadGameResult {
   url: string;
+  pluginPorts: Record<string, Record<string, MessagePort>>;
 }
 
 export interface RcadeAPI {

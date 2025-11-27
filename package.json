@@ -8,7 +8,9 @@
     "create",
     "action-deploy",
     "api",
-    "runtime"
+    "runtime",
+    "sdk",
+    "plugins/*"
   ],
   "scripts": {
     "dev:web": "bun run --cwd web dev",
