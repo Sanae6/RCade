@@ -24,8 +24,6 @@ async function main(web: Electron.WebContents, port: MessagePortMain) {
         const mapping = MAP[input.code as keyof typeof MAP];
 
         if (mapping) {
-            event.preventDefault();
-
             const message = {
                 ...mapping,
                 pressed: input.type === "keyDown"

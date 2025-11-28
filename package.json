@@ -10,7 +10,7 @@
     "api",
     "runtime",
     "sdk",
-    "plugins/*"
+    "plugins/input-classic"
   ],
   "scripts": {
     "dev:web": "bun run --cwd web dev",
