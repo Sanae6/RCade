@@ -129,7 +129,7 @@ export class Game {
                     return undefined;
             }
 
-            if (version.visibility === "personal" && auth.for === "cabinet") {
+            if (version.visibility === "private" && auth.for === "cabinet") {
                 return undefined;
             }
 

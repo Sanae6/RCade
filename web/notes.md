@@ -30,7 +30,7 @@ export type Manifest = {
     name: string,
     description: string,
     authors: Author | Author[],
-    visibility?: "personal" | "private" | "public",
+    visibility?: "private" | "internal" | "public",
 
     version?: SemVer,
 }

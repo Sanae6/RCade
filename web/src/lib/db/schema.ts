@@ -15,7 +15,7 @@ export const gameVersions = sqliteTable('game_versions', {
     gameId: text("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
     displayName: text("display_name"),
     description: text("description").notNull(),
-    visibility: text("visibility", { enum: ["public", "private", "personal"] }).notNull(),
+    visibility: text("visibility", { enum: ["public", "internal", "private"] }).notNull(),
     version: text("version").notNull(),
 }, (t) => [
     unique().on(t.gameId, t.version),
@@ -86,7 +86,7 @@ export const gameVersionsRelations = relations(gameVersions, ({ many, one }) => 
 //     pluginId: text("plugin_id").notNull().references(() => plugins.id, { onDelete: "cascade" }),
 //     displayName: text("display_name"),
 //     description: text("description").notNull(),
-//     visibility: text("visibility", { enum: ["public", "private", "personal"] }).notNull(),
+//     visibility: text("visibility", { enum: ["public", "internal", "private"] }).notNull(),
 //     version: text("version").notNull(),
 // }, (t) => [
 //     unique().on(t.pluginId, t.version),

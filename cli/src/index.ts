@@ -45,8 +45,8 @@ export async function main() {
         message: "Game visibility:",
         choices: [
             { name: "public", message: "Public", hint: "(Everyone can play!)" },
-            { name: "private", message: "Private", hint: "(Only Recursers and people at the Hub can play.)" },
-            { name: "personal", message: "Personal", hint: "(Only you can play - good for development)" },
+            { name: "internal", message: "Internal", hint: "(Only Recursers and people at the Hub can play.)" },
+            { name: "private", message: "Private", hint: "(Only you can play - good for development)" },
         ]
     });
 

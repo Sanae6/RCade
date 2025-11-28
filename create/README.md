@@ -37,8 +37,8 @@ Running `create-rcade` sets up:
 | Option | Who Can Play |
 |--------|--------------|
 | **Public** | Everyone |
-| **Private** | Recursers and people at the Hub |
-| **Personal** | Only you (great for development) |
+| **Internal** | Recursers and people at the Hub |
+| **Private** | Only you (great for development) |
 
 ## Templates
 

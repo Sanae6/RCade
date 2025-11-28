@@ -33977,7 +33977,7 @@ var Manifest = object({
   name: string2().nonempty().regex(/[a-zA-Z0-9_-]*/),
   display_name: string2().optional(),
   description: string2(),
-  visibility: _enum2(["public", "private", "personal"]),
+  visibility: _enum2(["public", "internal", "private"]),
   version: ZodSemverUnbranded.optional(),
   authors: union([ManifestAuthor, array(ManifestAuthor).min(1)]),
   dependencies: array(ManifestDependency)
@@ -33989,12 +33989,17 @@ var GameAuthorResponse = exports_external.object({
   display_name: exports_external.string(),
   recurse_id: exports_external.number().nullable().optional()
 });
+var GameDependencyResponse = exports_external.object({
+  name: exports_external.string(),
+  version: exports_external.string()
+});
 var GameVersionResponse = exports_external.object({
   displayName: exports_external.string().nullable().optional(),
   description: exports_external.string(),
-  visibility: exports_external.enum(["public", "private", "personal"]),
+  visibility: exports_external.enum(["public", "internal", "private"]),
   version: exports_external.string(),
   authors: exports_external.array(GameAuthorResponse),
+  dependencies: exports_external.array(GameDependencyResponse),
   contents: exports_external.object({
     url: exports_external.string(),
     expires: exports_external.number()

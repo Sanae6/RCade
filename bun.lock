@@ -69,7 +69,7 @@
     },
     "cli": {
       "name": "rcade",
-      "version": "0.0.9",
+      "version": "0.0.10",
       "bin": {
         "rcade": "./dist/index.js",
       },
@@ -94,7 +94,7 @@
     },
     "create": {
       "name": "create-rcade",
-      "version": "0.0.9",
+      "version": "0.0.10",
       "bin": {
         "create-rcade": "./dist/index.js",
       },
@@ -110,8 +110,9 @@
     },
     "plugins/input-classic": {
       "name": "@rcade/plugin-input-classic",
+      "version": "0.1.0",
       "dependencies": {
-        "@rcade/sdk": "workspace:*",
+        "@rcade/sdk": "0.1.1",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -138,8 +139,9 @@
         "typescript": "^5.0.0",
       },
     },
-    "sdk": {
+    "sdk/typescript": {
       "name": "@rcade/sdk",
+      "version": "0.1.1",
       "devDependencies": {
         "@types/bun": "latest",
       },
@@ -523,7 +525,7 @@
 
     "@rcade/runtime": ["@rcade/runtime@workspace:runtime"],
 
-    "@rcade/sdk": ["@rcade/sdk@workspace:sdk"],
+    "@rcade/sdk": ["@rcade/sdk@workspace:sdk/typescript"],
 
     "@rcade/web": ["@rcade/web@workspace:web"],
 

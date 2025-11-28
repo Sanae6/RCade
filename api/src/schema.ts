@@ -13,7 +13,7 @@ export const GameDependencyResponse = z.object({
 export const GameVersionResponse = z.object({
   displayName: z.string().nullable().optional(),
   description: z.string(),
-  visibility: z.enum(["public", "private", "personal"]),
+  visibility: z.enum(["public", "internal", "private"]),
   version: z.string(),
   authors: z.array(GameAuthorResponse),
   dependencies: z.array(GameDependencyResponse),

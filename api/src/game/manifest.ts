@@ -27,7 +27,7 @@ export const Manifest = z.object({
         .regex(/[a-zA-Z0-9_-]*/),
     display_name: z.string().optional(),
     description: z.string(),
-    visibility: z.enum(["public", "private", "personal"]),
+    visibility: z.enum(["public", "internal", "private"]),
     version: ZodSemverUnbranded.optional(),
     authors: z.union([ManifestAuthor, z.array(ManifestAuthor).min(1)]),
     dependencies: z.array(ManifestDependency),

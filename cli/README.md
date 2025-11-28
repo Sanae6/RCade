@@ -39,7 +39,7 @@ You'll be asked for:
 | **Game identifier** | URL-safe name (e.g., `space-blaster`) |
 | **Display name** | Human-readable name (e.g., `Space Blaster`) |
 | **Description** | Short description of your game |
-| **Visibility** | `public`, `private`, or `personal` |
+| **Visibility** | `public`, `internal`, or `private` |
 | **Versioning** | `automatic` (recommended) or `manual` |
 | **Template** | JavaScript, TypeScript, or Rust |
 | **Package manager** | npm, pnpm, or bun |

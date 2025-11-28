@@ -171,8 +171,8 @@ Every RCade game has an `rcade.manifest.json` that describes your game:
 | Visibility | Who Can Play |
 |------------|--------------|
 | `public` | Everyone! |
-| `private` | Recursers and people at the Hub |
-| `personal` | Only you (great for development) |
+| `internal` | Recursers and people at the Hub |
+| `private` | Only you (great for development) |
 
 ### Versioning
 
