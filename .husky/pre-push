@@ -1,5 +1,7 @@
 #!/bin/sh
 
+bun install
+
 bun run --cwd action-deploy build
 
 if ! git diff --quiet action-deploy/dist/; then
