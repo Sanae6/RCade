@@ -20,7 +20,6 @@ export interface GameInfo {
 
 export interface LoadGameResult {
   url: string;
-  pluginPorts: Record<string, Record<string, MessagePort>>;
 }
 
 export interface RcadeAPI {

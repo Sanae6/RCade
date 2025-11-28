@@ -10,12 +10,12 @@ import { Hono } from 'hono';
 import { Client, Game } from '@rcade/api';
 import * as tar from 'tar';
 import type { GameInfo, LoadGameResult } from '../shared/types';
-import { rcadeInputClassic } from '../plugins/rcade-input-classic';
+import { rcadeInputClassic } from '../plugins/rcade-input-classic/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = !app.isPackaged;
-const scaleFactor = parseFloat(process.env.RCADE_SCALE_FACTOR || (isDev ? '2' : '1'));
+const scaleFactor = parseFloat(process.env.RCADE_SCALE_FACTOR || (isDev ? '3' : '1'));
 
 // Hide cursor on Linux
 if (process.platform === 'linux') {
@@ -151,6 +151,10 @@ function createWindow(): void {
     },
   });
 
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
+
   // Capture ShiftLeft even when iframe has focus
   mainWindow.webContents.on('before-input-event', (_event, input) => {
     if (input.type === 'keyDown' && input.code === 'ShiftLeft') {
@@ -174,6 +178,7 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('get-games', async (): Promise<GameInfo[]> => {
     const games = await apiClient.getAllGames();
+
     return games.map((game: Game) => ({
       id: game.id(),
       name: game.name(),
@@ -183,7 +188,7 @@ app.whenReady().then(async () => {
     }));
   });
 
-  ipcMain.handle('load-game', async (event, game: GameInfo): Promise<LoadGameResult> => {
+  ipcMain.handle('load-game', async (event, game: GameInfo): Promise<Omit<LoadGameResult, "pluginPorts">> => {
     const { id, latestVersion } = game;
 
     const cached = await isGameCached(id, latestVersion);
@@ -200,15 +205,18 @@ app.whenReady().then(async () => {
 
     const port = await startGameServer(id, latestVersion);
 
-    const pluginPorts: Record<string, Record<string, MessagePort>> = {};
+    const pluginPorts: Record<string, Record<string, number>> = {};
+    const ports = [];
 
     if (game.dependencies.findIndex(v => v.name === "@rcade/input-classic" && v.version === "1.0.0") != -1) {
       pluginPorts["@rcade/input-classic"] = {
-        "1.0.0": rcadeInputClassic(event.sender)
+        "1.0.0": ports.push(rcadeInputClassic(event.sender)) - 1,
       }
     }
 
-    return { url: `http://localhost:${port}`, pluginPorts };
+    event.sender.postMessage("plugin-ports", { structure: pluginPorts }, ports);
+
+    return { url: `http://localhost:${port}` };
   });
 
   ipcMain.handle('unload-game', async (_event, gameId: string, version: string): Promise<void> => {

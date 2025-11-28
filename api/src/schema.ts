@@ -5,12 +5,18 @@ export const GameAuthorResponse = z.object({
   recurse_id: z.number().nullable().optional(),
 });
 
+export const GameDependencyResponse = z.object({
+  name: z.string(),
+  version: z.string(),
+});
+
 export const GameVersionResponse = z.object({
   displayName: z.string().nullable().optional(),
   description: z.string(),
   visibility: z.enum(["public", "private", "personal"]),
   version: z.string(),
   authors: z.array(GameAuthorResponse),
+  dependencies: z.array(GameDependencyResponse),
   contents: z.object({
     url: z.string(),
     expires: z.number(),

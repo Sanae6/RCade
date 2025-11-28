@@ -6,9 +6,12 @@ export class PluginChannel {
     private static availableChannels = new Map<string, MessagePort>();
 
     static {
+        window.parent.postMessage("request_plugin_channels", "*");
+
         window.addEventListener('message', (event) => {
             if (event.data?.type === 'plugin_channel_created') {
-                const { name, version, port } = event.data;
+                const { name, version } = event.data.channel;
+                const port = event.ports[0];
 
                 if (!name || !version || !port) {
                     console.warn('Invalid plugin_channel_created event', event.data);

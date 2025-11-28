@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import type { GameInfo } from '../../shared/types';
-  import { navigateToCarousel } from '../router.svelte';
+  import { onMount, onDestroy } from "svelte";
+  import type { GameInfo } from "../../shared/types";
+  import { navigateToCarousel } from "../router.svelte";
 
   interface Props {
     game: GameInfo;
@@ -10,23 +10,59 @@
   let { game }: Props = $props();
 
   let gameUrl = $state<string | null>(null);
+  let gamePluginPorts: {
+    [name: string]: { [version: string]: MessagePort };
+  } = {};
   let loading = $state(true);
   let error = $state<string | null>(null);
 
   async function loadGame() {
     try {
       if (window.rcade) {
-        // Clone to plain object for IPC serialization
-        const gameData = {
-          id: game.id,
-          name: game.name,
-          latestVersion: game.latestVersion,
-        };
-        const result = await window.rcade.loadGame(gameData);
-        gameUrl = result.url;
+        const pluginPortsPromise = new Promise<
+          Record<string, Record<string, MessagePort>>
+        >((resolve) => {
+          window.addEventListener(
+            "message",
+            (event) => {
+              if (event.data.type === "plugin-ports-ready") {
+                const { structure } = event.data;
+                const ports = event.ports;
+
+                const mappedPorts: Record<
+                  string,
+                  Record<string, MessagePort>
+                > = {};
+
+                for (const [pluginName, versions] of Object.entries(
+                  structure,
+                )) {
+                  mappedPorts[pluginName] = {};
+                  for (const [version, index] of Object.entries(
+                    versions as any,
+                  )) {
+                    mappedPorts[pluginName][version] = ports[index as number];
+                  }
+                }
+
+                console.log({ mappedPorts });
+                resolve(mappedPorts);
+              }
+            },
+            { once: true },
+          );
+        });
+
+        const { url } = await window.rcade.loadGame($state.snapshot(game));
+        const pluginPorts = await pluginPortsPromise;
+
+        console.log({ result: { url, pluginPorts } });
+
+        gameUrl = url;
+        gamePluginPorts = pluginPorts;
       }
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to load game';
+      error = e instanceof Error ? e.message : "Failed to load game";
     } finally {
       loading = false;
     }
@@ -57,6 +93,48 @@
   setInterval(() => {
     frame?.focus();
   }, 100);
+
+  function request_plugin_channels() {
+    for (let name of Object.keys(gamePluginPorts)) {
+      for (let version of Object.keys(gamePluginPorts[name])) {
+        const message = {
+          type: "plugin_channel_created",
+          channel: {
+            name,
+            version,
+          },
+        };
+
+        const port = gamePluginPorts[name][version];
+
+        console.log({ message, port });
+
+        frame?.contentWindow?.postMessage(message, "*", [port]);
+      }
+    }
+
+    gamePluginPorts = {};
+  }
+
+  onMount(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Security check: verify the message is from the iframe
+      if (event.source !== frame?.contentWindow) {
+        return;
+      }
+
+      if (event.data === "request_plugin_channels") {
+        request_plugin_channels();
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    // Cleanup function - removes the listener when component unmounts
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  });
 </script>
 
 {#if loading}
@@ -75,7 +153,8 @@
     <p class="hint">Press Menu to return</p>
   </div>
 {:else if gameUrl}
-  <iframe bind:this={frame} class="game-frame" src={gameUrl} title={game.name}></iframe>
+  <iframe bind:this={frame} class="game-frame" src={gameUrl} title={game.name}
+  ></iframe>
 {/if}
 
 <style>

@@ -1,3 +1,5 @@
+import { MessageChannelMain, MessagePortMain } from "electron";
+
 const MAP = {
     "ArrowUp": { type: "button", player: 1, button: "UP" },
     "ArrowDown": { type: "button", player: 1, button: "DOWN" },
@@ -17,7 +19,7 @@ const MAP = {
     "Digit2": { type: "system", player: 0, button: "TWO_PLAYER" },
 } as const;
 
-async function main(web: Electron.WebContents, port: MessagePort) {
+async function main(web: Electron.WebContents, port: MessagePortMain) {
     web.on('before-input-event', (event, input) => {
         const mapping = MAP[input.code as keyof typeof MAP];
 
@@ -34,8 +36,8 @@ async function main(web: Electron.WebContents, port: MessagePort) {
     })
 }
 
-export function rcadeInputClassic(web: Electron.WebContents): MessagePort {
-    const channel = new MessageChannel();
+export function rcadeInputClassic(web: Electron.WebContents): MessagePortMain {
+    const channel = new MessageChannelMain();
 
     main(web, channel.port1)
 
