@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "product": "jpac",
+  "config": {
+    "debounce": "standard"
+  },
+  "1/2 shift key": "",
+  "macros": {},
+  "pins": {
+    "1right": { "key": "d", "shift": "" },
+    "1up": { "key": "w", "shift": "" },
+    "1down": { "key": "s", "shift": "" },
+    "1left": { "key": "a", "shift": "" },
+    "1sw1": { "key": "f", "shift": "" },
+    "1sw2": { "key": "g", "shift": "" },
+    "1sw3": { "key": "space", "shift": "" },
+    "1sw4": { "key": "esc", "shift": "" },
+    "1sw5": { "key": "z", "shift": "" },
+    "1sw6": { "key": "x", "shift": "" },
+    "1sw7": { "key": "c", "shift": "" },
+    "1sw8": { "key": "v", "shift": "" },
+    "1start": { "key": "1", "shift": "" },
+    "1coin": { "key": "5", "shift": "" },
+    "1test": { "key": "f2", "shift": "" },
+    "2right": { "key": "l", "shift": "" },
+    "2up": { "key": "i", "shift": "" },
+    "2down": { "key": "k", "shift": "" },
+    "2left": { "key": "j", "shift": "" },
+    "2sw1": { "key": ";", "shift": "" },
+    "2sw2": { "key": "'", "shift": "" },
+    "2sw3": { "key": "q", "shift": "" },
+    "2sw4": { "key": "w", "shift": "" },
+    "2sw5": { "key": "i", "shift": "" },
+    "2sw6": { "key": "k", "shift": "" },
+    "2sw7": { "key": "j", "shift": "" },
+    "2sw8": { "key": "l", "shift": "" },
+    "2start": { "key": "2", "shift": "esc" },
+    "2coin": { "key": "6", "shift": "" },
+    "2test": { "key": "f3", "shift": "" },
+    "service": { "key": "f1", "shift": "" }
+  }
+}
