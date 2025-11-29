@@ -143,7 +143,9 @@ export const createCommand = new Command("create")
         const relativePath = file;
         const source = fs.readFileSync(path.join(templatePath, relativePath), "utf-8");
         const render = Mustache.render(source, view);
-        const destination = path.join(projectDir, file);
+        // Rename '_gitignore' to '.gitignore' (npm excludes .gitignore files from packages)
+        const destFile = file.replace(/_gitignore$/, '.gitignore');
+        const destination = path.join(projectDir, destFile);
         const destination_dir = dirname(destination);
 
         await mkdir(destination_dir, { recursive: true });
