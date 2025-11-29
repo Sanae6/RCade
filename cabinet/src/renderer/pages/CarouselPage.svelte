@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import type { GameInfo } from '../../shared/types';
-  import { navigateToGame } from '../router.svelte';
+  import { navigateToGame, getLastPlayedGame } from '../router.svelte';
 
   let games = $state<GameInfo[]>([]);
   let currentIndex = $state(0);
@@ -9,10 +9,37 @@
 
   const currentGame = $derived(games.length > 0 ? games[currentIndex] : null);
 
+  function gamesMatch(a: GameInfo, b: GameInfo): boolean {
+    return (a.id != null && a.id === b.id) ||
+      (a.id == null && a.name === b.name && a.latestVersion === b.latestVersion);
+  }
+
+  function findGameIndex(gameList: GameInfo[], game: GameInfo): number {
+    return gameList.findIndex(g => gamesMatch(g, game));
+  }
+
   async function fetchGames() {
     try {
       if (window.rcade) {
-        games = await window.rcade.getGames();
+        const prevGame = currentGame;
+        const newGames = await window.rcade.getGames();
+
+        if (newGames.length > 0) {
+          // Determine which game to select
+          const targetGame = prevGame ?? getLastPlayedGame();
+          if (targetGame) {
+            const idx = findGameIndex(newGames, targetGame);
+            if (idx !== -1) {
+              currentIndex = idx;
+            } else if (currentIndex >= newGames.length) {
+              currentIndex = newGames.length - 1;
+            }
+          }
+        } else {
+          currentIndex = 0;
+        }
+
+        games = newGames;
       }
     } catch (e) {
       console.error('Failed to fetch games:', e);

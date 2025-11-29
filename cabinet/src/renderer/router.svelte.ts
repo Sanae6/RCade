@@ -15,8 +15,14 @@ let currentRoute = $state<Route>(initialManifest == null ? { page: 'carousel' } 
   }
 });
 
+let lastPlayedGame = $state<GameInfo | null>(null);
+
 export function getRoute() {
   return currentRoute;
+}
+
+export function getLastPlayedGame() {
+  return lastPlayedGame;
 }
 
 export function navigateToCarousel() {
@@ -24,5 +30,6 @@ export function navigateToCarousel() {
 }
 
 export function navigateToGame(game: GameInfo) {
+  lastPlayedGame = game;
   currentRoute = { page: 'game', game };
 }
