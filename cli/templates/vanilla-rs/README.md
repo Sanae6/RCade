@@ -2,6 +2,10 @@
 
 {{description}}
 
+## About RCade
+
+This game is built for [RCade](https://rcade.recurse.com), a custom arcade cabinet at The Recurse Center. Learn more about the project at [github.com/fcjr/RCade](https://github.com/fcjr/RCade).
+
 ## Prerequisites
 
 - [Rust](https://rustup.rs/)
@@ -67,3 +71,7 @@ git push -u origin main
 ```
 
 The included GitHub Actions workflow will automatically deploy to RCade.
+
+---
+
+Made with <3 at [The Recurse Center](https://recurse.com)
