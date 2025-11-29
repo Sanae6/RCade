@@ -70,6 +70,17 @@ export const createCommand = new Command("create")
         default: name,
     });
 
+    const author = await input({
+        message: 'Enter author name:',
+        required: true,
+        validate: (value) => {
+            if (!value) {
+                return 'Author name is required';
+            }
+            return true;
+        }
+    });
+
     const visibility = await select({
         message: "Game visibility:",
         choices: [
@@ -90,6 +101,7 @@ export const createCommand = new Command("create")
     const templateDirectory = await select({
         message: "Starting template:",
         choices: [
+            { value: "p5-ts", name: "p5.js (TypeScript)" },
             { value: "vanilla-js", name: "Vanilla (JavaScript)" },
             { value: "vanilla-ts", name: "Vanilla (TypeScript)" },
             { value: "vanilla-rs", name: "Vanilla (Rust)" },
@@ -120,7 +132,7 @@ export const createCommand = new Command("create")
         description,
         visibility,
         ...(versioning === "automatic" ? {} : { version: "1.0.0" }),
-        authors: { display_name: "Temp" },
+        authors: { display_name: author },
         dependencies: [
             { name: "@rcade/input-classic", version: "1.0.0" },
         ]
@@ -158,6 +170,7 @@ export const createCommand = new Command("create")
     switch (templateDirectory) {
         case "vanilla-js": await setup_js(projectDir); break;
         case "vanilla-ts": await setup_js(projectDir); break;
+        case "p5-ts": await setup_js(projectDir); break;
         case "vanilla-rs": await setup_rs(projectDir); break;
     }
 });
