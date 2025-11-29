@@ -5,9 +5,12 @@
     "description": "{{description}}",
     "type": "module",
     "scripts": {
+        "dev": "concurrently \"vite\" \"rcade dev http://localhost:5173\"",
         "build": "vite build"
     },
     "devDependencies": {
+        "concurrently": "^9.0.0",
+        "rcade": "^0.0.19",
         "vite": "^7.2.4"
     }
 }
