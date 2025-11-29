@@ -102,6 +102,8 @@ Choose your weapon:
 |----------|----------|
 | **Vanilla JavaScript** | Quick prototypes, simple games |
 | **Vanilla TypeScript** | Type-safe development, larger projects |
+| **p5.js** | Creative coding, visual games, animations |
+| **p5.js + TypeScript** | Creative coding with type safety |
 | **Vanilla Rust** | Performance-critical games, WASM enthusiasts |
 
 All templates come pre-configured with:
@@ -249,10 +251,10 @@ This monorepo contains:
 | `action-deploy/` | GitHub Action for deploying games |
 | `cabinet/` | Electron app running on the arcade machine |
 | `web/` | SvelteKit web app for browsing games |
-| `api/` | Shared API types and schemas |
-| `sdk/` | TypeScript SDK for game development |
-| `plugins/` | Input and system plugins |
-| `runtime/` | Game runtime environment |
+| `api/` | Shared API types and Zod schemas |
+| `sdk/` | SDKs for game development (TypeScript and Rust) |
+| `plugins/` | Input and system plugins (e.g., `input-classic`) |
+| `runtime/` | Game runtime environment for plugin loading |
 
 ---
 
