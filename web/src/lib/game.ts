@@ -125,7 +125,7 @@ export class Game {
     }
 
     public async intoResponse(auth: { for: "recurser", rc_id: string } | { for: "public" } | { for: "cabinet" }, config: { withR2Key: boolean } = { withR2Key: false }): Promise<object | undefined> {
-        const versions = await Promise.all(this.data.versions.map(async version => {
+        const versions = (await Promise.all(this.data.versions.map(async version => {
             if (version.visibility !== "public") {
                 if (auth.for === "public" || (auth.for == "recurser" && auth.rc_id !== this.data.owner_rc_id))
                     return undefined;
@@ -157,7 +157,7 @@ export class Game {
                 dependencies: version.dependencies.map(v => ({ name: v.dependencyName, version: v.dependencyVersion })),
                 ...r2Key,
             }
-        }));
+        }))).filter(v => v !== undefined);
 
         if (versions.length == 0) {
             return undefined;
