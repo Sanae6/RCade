@@ -270,6 +270,9 @@ function createWindow(): void {
 
   mainWindow.webContents.on("did-finish-load", () => {
     mainWindow.webContents.setZoomFactor(scaleFactor);
+    // Ensure window has focus for input on Raspberry Pi
+    mainWindow.focus();
+    mainWindow.webContents.focus();
   });
 
   if (!app.isPackaged) {

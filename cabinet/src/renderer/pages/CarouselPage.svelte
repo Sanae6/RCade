@@ -47,13 +47,15 @@
   }
 
   function handleKeydown(event: KeyboardEvent) {
+    console.log('keydown:', event.key, event.code);
     if (games.length === 0) return;
 
-    if (event.key === 'd') {
+    const key = event.key.toLowerCase();
+    if (key === 'd') {
       currentIndex = (currentIndex + 1) % games.length;
-    } else if (event.key === 'a') {
+    } else if (key === 'a') {
       currentIndex = (currentIndex - 1 + games.length) % games.length;
-    } else if (event.key === 'f' && currentGame) {
+    } else if (key === 'f' && currentGame) {
       navigateToGame(currentGame);
     }
   }
