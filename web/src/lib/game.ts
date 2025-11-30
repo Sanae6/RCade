@@ -1,4 +1,4 @@
-import { eq, inArray, type InferSelectModel } from "drizzle-orm";
+import { and, eq, inArray, type InferSelectModel } from "drizzle-orm";
 import { getDb } from "./db";
 import { categories, gameAuthors, gameDependencies, games, gameVersionCategories, gameVersions } from "./db/schema";
 import type { GithubOIDCClaims } from "./auth/github";
@@ -87,6 +87,7 @@ export class Game {
             displayName: manifest.display_name,
             description: manifest.description,
             visibility: manifest.visibility,
+            status: "pending",
         });
 
         const authors = Array.isArray(manifest.authors) ? manifest.authors : [manifest.authors];
@@ -160,6 +161,10 @@ export class Game {
 
     public async intoResponse(auth: { for: "recurser", rc_id: string } | { for: "public" } | { for: "cabinet" }, config: { withR2Key: boolean } = { withR2Key: false }): Promise<object | undefined> {
         const versions = (await Promise.all(this.data.versions.map(async version => {
+            if (version.status !== "published") {
+                return undefined;
+            }
+
             if (version.visibility !== "public") {
                 if (auth.for === "public" || (auth.for == "recurser" && auth.rc_id !== this.data.owner_rc_id))
                     return undefined;
@@ -216,5 +221,22 @@ export class Game {
 
     public version(version: string) {
         return this.data.versions.find(v => v.version == version);
+    }
+
+    public matchesRepo(repo: string): boolean {
+        return this.data.github_repo === repo;
+    }
+
+    public async setVersionStatus(version: string, status: "pending" | "published"): Promise<boolean> {
+        const result = await getDb()
+            .update(gameVersions)
+            .set({ status })
+            .where(and(
+                eq(gameVersions.gameId, this.data.id),
+                eq(gameVersions.version, version)
+            ))
+            .returning();
+
+        return result.length > 0;
     }
 }

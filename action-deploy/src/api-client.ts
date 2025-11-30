@@ -9,9 +9,19 @@ const RECURSE_BASE_URL = "https://rcade.recurse.com/api/v1";
 const DeploymentIntent = z.object({
   upload_url: z.string(),
   expires: z.number(),
+  version: z.string(),
 });
 
 type DeploymentIntent = z.infer<typeof DeploymentIntent>;
+
+const PublishResponse = z.object({
+  success: z.boolean(),
+  name: z.string(),
+  version: z.string(),
+  status: z.string(),
+});
+
+type PublishResponse = z.infer<typeof PublishResponse>;
 
 export class RCadeDeployClient {
   private httpClient: HttpClient;
@@ -39,5 +49,19 @@ export class RCadeDeployClient {
     core.setSecret(deploymentIntent.upload_url);
 
     return deploymentIntent;
+  }
+
+  async publishVersion(name: string, version: string): Promise<PublishResponse> {
+    const res = await this.httpClient.post(
+      `${RECURSE_BASE_URL}/deployments/${name}/${version}/publish`,
+      ""
+    );
+    const body = await res.readBody();
+    if (res.message.statusCode !== 200) {
+      throw new Error(
+        `Failed to publish version: ${res.message.statusCode} ${res.message.statusMessage} - ${body}`
+      );
+    }
+    return PublishResponse.parse(JSON.parse(body));
   }
 }

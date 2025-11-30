@@ -99,6 +99,11 @@ export async function run(): Promise<void> {
     core.info(`✅ Uploaded artifact`);
     core.endGroup();
 
+    core.startGroup("📢 Publishing Version");
+    await client.publishVersion(manifest.name, intent.version);
+    core.info(`✅ Published version ${intent.version}`);
+    core.endGroup();
+
     core.startGroup(`✨ Deployment complete! ✨`);
     core.info("Your game is now available on the RCade!");
   } catch (error) {

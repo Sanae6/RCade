@@ -268,7 +268,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
         const { upload_url, expires } = await object.publishVersion(version, manifest as any);
 
-        return jsonResponse({ upload_url, expires }, 200);
+        return jsonResponse({ upload_url, expires, version }, 200);
     } catch (error) {
         if (error instanceof Error && error.message === "Version mismatch") {
             return jsonResponse({ error: 'Manifest version does not match the target version' }, 409);

@@ -44186,6 +44186,7 @@ var string4 = (params) => {
 };
 var integer2 = /^-?\d+$/;
 var number4 = /^-?\d+(?:\.\d+)?/;
+var boolean4 = /^(?:true|false)$/i;
 var lowercase2 = /^[^A-Z]*$/;
 var uppercase2 = /^[^a-z]*$/;
 
@@ -45045,6 +45046,26 @@ var $ZodNumber2 = /* @__PURE__ */ $constructor2("$ZodNumber", (inst, def) => {
 var $ZodNumberFormat2 = /* @__PURE__ */ $constructor2("$ZodNumberFormat", (inst, def) => {
   $ZodCheckNumberFormat2.init(inst, def);
   $ZodNumber2.init(inst, def);
+});
+var $ZodBoolean2 = /* @__PURE__ */ $constructor2("$ZodBoolean", (inst, def) => {
+  $ZodType2.init(inst, def);
+  inst._zod.pattern = boolean4;
+  inst._zod.parse = (payload, _ctx) => {
+    if (def.coerce)
+      try {
+        payload.value = Boolean(payload.value);
+      } catch (_) {}
+    const input = payload.value;
+    if (typeof input === "boolean")
+      return payload;
+    payload.issues.push({
+      expected: "boolean",
+      code: "invalid_type",
+      input,
+      inst
+    });
+    return payload;
+  };
 });
 var $ZodUnknown2 = /* @__PURE__ */ $constructor2("$ZodUnknown", (inst, def) => {
   $ZodType2.init(inst, def);
@@ -46025,6 +46046,12 @@ function _int2(Class3, params) {
     ...normalizeParams2(params)
   });
 }
+function _boolean2(Class3, params) {
+  return new Class3({
+    type: "boolean",
+    ...normalizeParams2(params)
+  });
+}
 function _unknown2(Class3) {
   return new Class3({
     type: "unknown"
@@ -46531,6 +46558,13 @@ var ZodNumberFormat2 = /* @__PURE__ */ $constructor2("ZodNumberFormat", (inst, d
 function int3(params) {
   return _int2(ZodNumberFormat2, params);
 }
+var ZodBoolean2 = /* @__PURE__ */ $constructor2("ZodBoolean", (inst, def) => {
+  $ZodBoolean2.init(inst, def);
+  ZodType2.init(inst, def);
+});
+function boolean6(params) {
+  return _boolean2(ZodBoolean2, params);
+}
 var ZodUnknown2 = /* @__PURE__ */ $constructor2("ZodUnknown", (inst, def) => {
   $ZodUnknown2.init(inst, def);
   ZodType2.init(inst, def);
@@ -46812,7 +46846,14 @@ var import_auth = __toESM(require_auth2(), 1);
 var RECURSE_BASE_URL = "https://rcade.recurse.com/api/v1";
 var DeploymentIntent = object2({
   upload_url: string6(),
-  expires: number6()
+  expires: number6(),
+  version: string6()
+});
+var PublishResponse = object2({
+  success: boolean6(),
+  name: string6(),
+  version: string6(),
+  status: string6()
 });
 
 class RCadeDeployClient {
@@ -46832,6 +46873,14 @@ class RCadeDeployClient {
     const deploymentIntent = DeploymentIntent.parse(JSON.parse(body));
     core3.setSecret(deploymentIntent.upload_url);
     return deploymentIntent;
+  }
+  async publishVersion(name2, version3) {
+    const res = await this.httpClient.post(`${RECURSE_BASE_URL}/deployments/${name2}/${version3}/publish`, "");
+    const body = await res.readBody();
+    if (res.message.statusCode !== 200) {
+      throw new Error(`Failed to publish version: ${res.message.statusCode} ${res.message.statusMessage} - ${body}`);
+    }
+    return PublishResponse.parse(JSON.parse(body));
   }
 }
 
@@ -46924,6 +46973,10 @@ async function run() {
     core5.startGroup("\uD83D\uDE80 Uploading Artifact");
     await uploadFileStream(outputPath, intent.upload_url);
     core5.info(`✅ Uploaded artifact`);
+    core5.endGroup();
+    core5.startGroup("\uD83D\uDCE2 Publishing Version");
+    await client.publishVersion(manifest.name, intent.version);
+    core5.info(`✅ Published version ${intent.version}`);
     core5.endGroup();
     core5.startGroup(`✨ Deployment complete! ✨`);
     core5.info("Your game is now available on the RCade!");
