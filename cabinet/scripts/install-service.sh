@@ -17,6 +17,10 @@ fi
 
 echo "Building rcade cabinet..."
 cd "$PROJECT_DIR"
+
+# Clean old build artifacts to ensure fresh rebuild
+rm -rf "$PROJECT_DIR/release"
+
 "$BUN_PATH" run build:linux
 
 # Find the AppImage
