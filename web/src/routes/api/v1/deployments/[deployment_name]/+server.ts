@@ -1,11 +1,10 @@
 import { GithubOIDCValidator } from "$lib/auth/github";
 import { Game } from "$lib/game";
 import { RecurseAPIError } from "$lib/recurse";
-import { GameManifest, PluginManifest } from "@rcade/api";
+import { GameManifest } from "@rcade/api";
 import type { RequestHandler } from "@sveltejs/kit";
 import semver from "semver";
 import { ZodError } from "zod";
-import { Plugin } from "$lib/plugin";
 import git from "isomorphic-git";
 import http from 'isomorphic-git/http/web';
 import LightningFS from '@isomorphic-git/lightning-fs';
@@ -135,19 +134,9 @@ export const POST: RequestHandler = async ({ params, request }) => {
         throw error;
     }
 
-    let kind: "game" | "plugin" = "game";
-
-    if ("kind" in body && body.kind === "plugin") {
-        kind = "plugin";
-    }
-
     let manifest;
     try {
-        if (kind === "game") {
-            manifest = GameManifest.parse(body);
-        } else {
-            manifest = PluginManifest.parse(body);
-        }
+        manifest = GameManifest.parse(body);
     } catch (error) {
         if (error instanceof ZodError) {
             const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`);
@@ -160,30 +149,19 @@ export const POST: RequestHandler = async ({ params, request }) => {
         return jsonResponse({ error: 'Deployment name does not match object name in manifest' }, 400);
     }
 
-    let object;
-
-    if (kind === "game") {
-        object = await Game.byName(deploymentName);
-    } else {
-        object = await Plugin.byName(deploymentName);
-    }
+    let game = await Game.byName(deploymentName);
 
     try {
         let version: string;
 
-        if (object == undefined) {
+        if (game == undefined) {
             version = manifest.version ?? "1.0.0";
-
-            if (kind === "game") {
-                object = await Game.new(manifest.name, auth);
-            } else {
-                object = await Plugin.new(manifest.name, auth);
-            }
+            game = await Game.new(manifest.name, auth);
         } else {
             if (manifest.version) {
                 version = manifest.version;
             } else {
-                const latest = await object.latestVersionNumber();
+                const latest = await game.latestVersionNumber();
                 if (latest == undefined) {
                     version = "1.0.0";
                 } else {
@@ -266,7 +244,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
         vol.reset();
 
-        const { upload_url, expires } = await object.publishVersion(version, manifest as any);
+        const { upload_url, expires } = await game.publishVersion(version, manifest);
 
         return jsonResponse({ upload_url, expires, version }, 200);
     } catch (error) {
