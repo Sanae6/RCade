@@ -26,6 +26,8 @@ The `rcade` CLI scaffolds new game projects with everything you need:
 
 ## Usage
 
+### Create a New Game
+
 Run the create command and follow the interactive prompts:
 
 ```bash
@@ -43,6 +45,48 @@ You'll be asked for:
 | **Versioning** | `automatic` (recommended) or `manual` |
 | **Template** | JavaScript, TypeScript, or Rust |
 | **Package manager** | npm, pnpm, or bun |
+
+### Remix an Existing Game
+
+Want to build on a game from the [rcade-community](https://github.com/recurse-center/rcade-community) archive? Use the remix command:
+
+```bash
+npx rcade@latest remix <game-name>
+```
+
+This clones the game and sets it up as a new project for you to modify.
+
+### Local Development with the Cabinet
+
+Test your game in the actual rcade cabinet environment:
+
+```bash
+npx rcade@latest dev <server-url>
+```
+
+For example, if your game is running on `http://localhost:5173`:
+
+```bash
+npx rcade@latest dev http://localhost:5173
+```
+
+This downloads and launches the rcade cabinet application, loading your game from the local dev server. Options:
+
+| Option | Description |
+|--------|-------------|
+| `-v, --version <version>` | Use a specific cabinet version |
+| `--force-download` | Force re-download of the cabinet binary |
+| `--scale <factor>` | Scale factor for the window (default: 2) |
+
+### Manage Cabinet Cache
+
+The cabinet binary is cached locally. Manage it with:
+
+```bash
+npx rcade@latest cache list    # List cached versions
+npx rcade@latest cache clear   # Clear all cached versions
+npx rcade@latest cache dir     # Print the cache directory path
+```
 
 ## Templates
 

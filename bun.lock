@@ -52,7 +52,7 @@
     },
     "cabinet": {
       "name": "@rcade/client",
-      "version": "0.1.15",
+      "version": "0.1.16",
       "dependencies": {
         "@hono/node-server": "^1.13.7",
         "@rcade/api": "workspace:*",
