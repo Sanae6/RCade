@@ -35,9 +35,7 @@ declare global {
 				BUCKET_TOKEN: string,
 				BUCKET_ACCESS_KEY: string,
 				BUCKET_ACCESS_KEY_SECRET: string,
-				GITHUB_APP_ID: string,
-				GITHUB_APP_PRIVATE_KEY: string,
-				GITHUB_APP_INSTALLATION_ID: string,
+				GITHUB_DISPATCH_TOKEN: string,
 			};
 			context: {
 				waitUntil(promise: Promise<any>): void;

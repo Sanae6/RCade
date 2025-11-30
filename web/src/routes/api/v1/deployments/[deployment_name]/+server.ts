@@ -6,78 +6,51 @@ import { GameManifest } from "@rcade/api";
 import type { RequestHandler } from "@sveltejs/kit";
 import semver from "semver";
 import { ZodError } from "zod";
-import git from "isomorphic-git";
-import http from 'isomorphic-git/http/web';
 import { env } from "$env/dynamic/private";
 import * as jose from 'jose';
-import { createPrivateKey } from "node:crypto";
-import { fs, vol } from 'memfs';
 
 const VALIDATOR = new GithubOIDCValidator();
 
-// Helper function to generate JWT
-async function generateGitHubAppJWT(appId: string, privateKey: string) {
-    const now = Math.floor(Date.now() / 1000);
-
-    const keyObject = createPrivateKey({
-        key: privateKey,
-        format: 'pem',
-        type: 'pkcs1'
+async function isRepoPublic(repo: string): Promise<boolean> {
+    const response = await fetch(`https://api.github.com/repos/${repo}`, {
+        headers: {
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'User-Agent': 'RCade'
+        }
     });
 
-    const pkcs8Key = keyObject.export({
-        format: 'pem',
-        type: 'pkcs8'
-    }) as string;
-
-    const key = await jose.importPKCS8(pkcs8Key, 'RS256');
-
-    return await new jose.SignJWT({})
-        .setProtectedHeader({ alg: 'RS256' })
-        .setIssuedAt(now)
-        .setExpirationTime(now + 600)
-        .setIssuer(appId)
-        .sign(key);
-}
-
-// Get installation access token
-async function getInstallationToken(appId: string, privateKey: string, installationId: string) {
-    const jwt = await generateGitHubAppJWT(appId, privateKey);
-
-    const response = await fetch(
-        `https://api.github.com/app/installations/${installationId}/access_tokens`,
-        {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${jwt}`,
-                'Accept': 'application/vnd.github+json',
-                'X-GitHub-Api-Version': '2022-11-28',
-                'User-Agent': "RCade Community"
-            },
-        }
-    );
-
-    const data = await response.text();
-
-    try {
-        return (JSON.parse(data)).token;
-    } catch (err) {
-        throw new Error(data);
-    }
-}
-
-let _GITHUB_TOKEN: string | undefined = undefined;
-
-async function githubToken() {
-    if (_GITHUB_TOKEN === undefined) {
-        _GITHUB_TOKEN = await getInstallationToken(
-            env.GITHUB_APP_ID!,
-            env.GITHUB_APP_PRIVATE_KEY!,
-            env.GITHUB_APP_INSTALLATION_ID!
-        );
+    if (!response.ok) {
+        // ff we can't fetch repo info, assume it's private or doesn't exist
+        return false;
     }
 
-    return _GITHUB_TOKEN;
+    const data = await response.json();
+    return data.private === false;
+}
+
+async function triggerCommunityClone(sourceRepo: string, deploymentName: string, version: string) {
+    const response = await fetch('https://api.github.com/repos/fcjr/rcade/actions/workflows/clone-to-community.yaml/dispatches', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${env.GITHUB_DISPATCH_TOKEN}`,
+            'Accept': 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'User-Agent': 'RCade Community'
+        },
+        body: JSON.stringify({
+            ref: 'main',
+            inputs: {
+                source_repo: sourceRepo,
+                deployment_name: deploymentName,
+                version: version
+            }
+        })
+    });
+
+    if (!response.ok) {
+        console.error('Failed to trigger community clone workflow:', response.status, await response.text());
+    }
 }
 
 function jsonResponse(body: object, status: number): Response {
@@ -121,6 +94,12 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
             return jsonResponse({ error: error.message }, error.statusCode);
         }
         throw error;
+    }
+
+    if (!await isRepoPublic(auth.repository)) {
+        return jsonResponse({
+            error: 'Only public repositories can be deployed to RCade. Please make your repository public and try again.'
+        }, 403);
     }
 
     let body;
@@ -184,101 +163,12 @@ export const POST: RequestHandler = async ({ params, request, platform }) => {
             }
         }
 
-        // TODO: Temporarily disabled community GitHub clone/push due to timeouts on CI.
-        // Need to move to a worker model.
-        // const dir = '/repo';
-
-        // try {
-        //     await git.clone({
-        //         fs,
-        //         http,
-        //         dir,
-        //         url: `https://github.com/${auth.repository}`,
-        //     });
-
-        //     const primaryBranch = await git.currentBranch({
-        //         fs,
-        //         dir,
-        //         fullname: false
-        //     });
-
-        //     const createRepoResponse = await fetch('https://api.github.com/orgs/rcade-community/repos', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Authorization': `Bearer ${await githubToken()}`,
-        //             'Accept': 'application/vnd.github+json',
-        //             'X-GitHub-Api-Version': '2022-11-28',
-        //             'User-Agent': "RCade Community"
-        //         },
-        //         body: JSON.stringify({
-        //             name: deploymentName,
-        //             private: false, // or true if you want it private
-        //             auto_init: false, // important: don't initialize with README
-        //         }),
-        //     });
-
-        //     // 422 status means repo already exists, which is fine
-        //     if (!createRepoResponse.ok && createRepoResponse.status !== 422) {
-        //         throw new Error(`Failed to create repository: ${await createRepoResponse.text()}`);
-        //     }
-
-        //     await git.addRemote({
-        //         fs,
-        //         dir,
-        //         remote: 'rcade-community',
-        //         url: `https://github.com/rcade-community/${deploymentName}`,
-        //     });
-
-        //     const branches = await git.listBranches({ fs, dir });
-
-        //     for (const branch of branches.filter(b => b !== 'HEAD')) {
-        //         const new_branch = `${version}/${branch}`
-
-        //         await git.renameBranch({
-        //             fs,
-        //             dir,
-        //             oldref: branch,
-        //             ref: new_branch,
-        //         });
-
-        //         const tok = await githubToken();
-
-        //         await git.push({
-        //             fs,
-        //             http,
-        //             dir,
-        //             remote: 'rcade-community',
-        //             ref: new_branch,
-        //             onAuth: () => ({
-        //                 username: 'x-access-token',
-        //                 password: tok
-        //             }),
-        //         });
-        //     }
-
-        //     const targetBranch = `${version}/${primaryBranch}`;
-        //     const changeDefaultBranchResponse = await fetch(`https://api.github.com/repos/rcade-community/${deploymentName}`, {
-        //         method: 'PATCH',
-        //         headers: {
-        //             'Authorization': `Bearer ${await githubToken()}`,
-        //             'Accept': 'application/vnd.github+json',
-        //             'X-GitHub-Api-Version': '2022-11-28',
-        //             'User-Agent': "RCade Community"
-        //         },
-        //         body: JSON.stringify({
-        //             default_branch: targetBranch
-        //         }),
-        //         });
-
-        //     if (!changeDefaultBranchResponse.ok) {
-        //         const errorText = await changeDefaultBranchResponse.text();
-        //         throw new Error(`Failed to change default branch: ${errorText}`);
-        //     }
-        // } catch (error) {
-        //     return jsonResponse({ error: `Failed to clone your repository. ${error}` }, 500);
-        // }
-
-        // vol.reset();
+        // fire-and-forget: trigger community clone workflow
+        // this runs async in github actions and won't block the deployment
+        // TODO: should we keep track of the state of this for remix?
+        triggerCommunityClone(auth.repository, deploymentName, version).catch((err) => {
+            console.error('Error triggering community clone:', err);
+        });
 
         const { upload_url, expires } = await game.publishVersion(version, manifest);
 
