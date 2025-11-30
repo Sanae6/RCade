@@ -6,7 +6,7 @@ import path from "node:path";
 const CACHE_DIR = path.join(os.homedir(), ".rcade", "bin");
 
 export const cacheCommand = new Command("cache")
-    .description("Manage the rcade cabinet cache")
+    .description("manage the RCade cabinet cache")
     .addCommand(
         new Command("clear")
             .description("Clear all cached cabinet binaries")

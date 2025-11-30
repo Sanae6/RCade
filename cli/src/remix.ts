@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { readdir } from "fs/promises";
+import { select } from "@inquirer/prompts";
 
 const execAsync = promisify(exec);
 
@@ -44,8 +45,18 @@ interface ParsedBranch {
     fullName: string;
 }
 
+interface RcadeGame {
+    id: string;
+    name: string;
+    versions: {
+        displayName: string;
+        description: string;
+    }[];
+}
+
 const CLEANUP_MARKER = '__CLEANUP_REMOTE_REFS__';
 const GITHUB_API = 'https://api.github.com/repos/rcade-community';
+const RCADE_API = 'https://rcade.recurse.com/api/v1';
 
 async function fetchRepoInfo(packageName: string): Promise<GitHubRepo> {
     const response = await fetch(`${GITHUB_API}/${packageName}`, {
@@ -69,6 +80,42 @@ async function fetchBranches(packageName: string): Promise<GitHubBranch[]> {
     }
 
     return response.json() as any;
+}
+
+async function fetchGames(): Promise<RcadeGame[]> {
+    const response = await fetch(`${RCADE_API}/games`);
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch games: ${response.status} ${response.statusText}`);
+    }
+
+    return response.json() as any;
+}
+
+async function selectGame(): Promise<string> {
+    console.log(c.info('\n🎮 Fetching available games...\n'));
+
+    const games = await fetchGames();
+
+    if (games.length === 0) {
+        throw new Error('No games available to remix');
+    }
+
+    const selectedGame = await select({
+        message: 'Select a game to remix:',
+        choices: games.map(game => {
+            const latestVersion = game.versions[0];
+            const displayName = latestVersion?.displayName || game.name;
+            const description = latestVersion?.description || '';
+            return {
+                value: game.name,
+                name: displayName,
+                description: description ? c.dim(description) : undefined,
+            };
+        }),
+    });
+
+    return selectedGame;
 }
 
 function parseBranches(branches: GitHubBranch[]): ParsedBranch[] {
@@ -296,9 +343,10 @@ async function remix(packageName: string, version?: string) {
 }
 
 export const remixCommand = new Command("remix")
-    .description("Remix an RCade game")
-    .argument('<game>', 'game name to remix')
+    .description("remix an RCade game")
+    .argument('[game]', 'name of RCade game to remix (interactive selection if omitted)')
     .option('-v, --src-version <version>', 'specify game version')
-    .action((packageName, options) => {
-        remix(packageName, options.srcVersion);
+    .action(async (packageName, options) => {
+        const gameName = packageName || await selectGame();
+        remix(gameName, options.srcVersion);
     });

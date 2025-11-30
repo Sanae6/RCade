@@ -246,7 +246,7 @@ function launchCabinet(binaryPath: string, info: PlatformInfo, args: string[]): 
 }
 
 export const devCommand = new Command("dev")
-    .description("Launch the rcade cabinet application for local development")
+    .description("launch the RCade cabinet application for local development")
     .argument("<server>", "URL of your local dev server (e.g., http://localhost:5173)")
     .argument("[manifest]", "Path to rcade.manifest.json (default: ./rcade.manifest.json)")
     .option("-v, --version <version>", "Specific cabinet version to run")

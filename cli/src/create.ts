@@ -44,7 +44,7 @@ function getTemplatesDir(): string {
 }
 
 export const createCommand = new Command("create")
-    .description("Create a new rcade project")
+    .description("create a new RCade project")
     .action(async () => {
     const name = await input({
         message: 'Enter game identifier (e.g. my-game):',
