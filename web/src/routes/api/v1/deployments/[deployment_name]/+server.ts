@@ -67,11 +67,19 @@ async function getInstallationToken(appId: string, privateKey: string, installat
     }
 }
 
-const GITHUB_TOKEN = await getInstallationToken(
-    env.GITHUB_APP_ID!,
-    env.GITHUB_APP_PRIVATE_KEY!,
-    env.GITHUB_APP_INSTALLATION_ID!
-);
+let _GITHUB_TOKEN: string | undefined = undefined;
+
+async function githubToken() {
+    if (_GITHUB_TOKEN === undefined) {
+        _GITHUB_TOKEN = await getInstallationToken(
+            env.GITHUB_APP_ID!,
+            env.GITHUB_APP_PRIVATE_KEY!,
+            env.GITHUB_APP_INSTALLATION_ID!
+        );
+    }
+
+    return _GITHUB_TOKEN;
+}
 
 function jsonResponse(body: object, status: number): Response {
     return new Response(JSON.stringify(body), {
@@ -202,7 +210,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
             const createRepoResponse = await fetch('https://api.github.com/orgs/rcade-community/repos', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+                    'Authorization': `Bearer ${await githubToken()}`,
                     'Accept': 'application/vnd.github+json',
                     'X-GitHub-Api-Version': '2022-11-28',
                     'User-Agent': "RCade Community"
@@ -238,6 +246,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
                     ref: new_branch,
                 });
 
+                const tok = await githubToken();
+
                 await git.push({
                     fs,
                     http,
@@ -246,7 +256,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
                     ref: new_branch,
                     onAuth: () => ({
                         username: 'x-access-token',
-                        password: GITHUB_TOKEN
+                        password: tok
                     }),
                 });
             }
