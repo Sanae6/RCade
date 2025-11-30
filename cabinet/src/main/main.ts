@@ -236,6 +236,7 @@ function createWindow(): void {
   const mainWindow = new BrowserWindow({
     fullscreen: fullscreen,
     icon: iconPath,
+    show: false, // Don't show until ready for proper focus handling
     ...(isDev && {
       width: 336 * scaleFactor,
       height: 262 * scaleFactor,
@@ -248,6 +249,12 @@ function createWindow(): void {
       nodeIntegration: false,
       webSecurity: false, // Allow loading localhost game servers in iframes
     },
+  });
+
+  // Show and focus window when ready - ensures proper input handling on Pi
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    mainWindow.focus();
   });
 
   if (isDev) {
