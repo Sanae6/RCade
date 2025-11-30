@@ -110,6 +110,51 @@ async function startGameServer(gameId: string, version: string, controller: Abor
 
   const app = new Hono();
 
+  // CSP to block fetch, websockets, and other network requests
+  // Also blocks access to various browser APIs
+  const cspHeader = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",  // allow fetching local assets, block external requests
+    "media-src 'self'",
+    // TODO: workers should be moved to a plugin API for better sandboxing
+    "worker-src 'self' blob:",
+  ].join('; ');
+
+  // script to block storage APIs (localStorage, sessionStorage, cookies)
+  const storageBlockerScript = `<script>
+(function() {
+  // Block localStorage
+  Object.defineProperty(window, 'localStorage', {
+    get: function() { throw new DOMException('localStorage is disabled', 'SecurityError'); },
+    configurable: false
+  });
+  // Block sessionStorage
+  Object.defineProperty(window, 'sessionStorage', {
+    get: function() { throw new DOMException('sessionStorage is disabled', 'SecurityError'); },
+    configurable: false
+  });
+  // Block cookies
+  Object.defineProperty(document, 'cookie', {
+    get: function() { return ''; },
+    set: function() { throw new DOMException('Cookies are disabled', 'SecurityError'); },
+    configurable: false
+  });
+  // Block IndexedDB
+  Object.defineProperty(window, 'indexedDB', {
+    get: function() { throw new DOMException('IndexedDB is disabled', 'SecurityError'); },
+    configurable: false
+  });
+  // Block Cache API
+  Object.defineProperty(window, 'caches', {
+    get: function() { throw new DOMException('Cache API is disabled', 'SecurityError'); },
+    configurable: false
+  });
+})();
+</script>`;
+
   app.get('/*', async (c) => {
     let filePath = c.req.path;
     if (filePath === '/') filePath = '/index.html';
@@ -118,7 +163,7 @@ async function startGameServer(gameId: string, version: string, controller: Abor
     console.log(`[GameServer] Serving: ${fullPath}`);
 
     try {
-      const content = await fs.readFile(fullPath);
+      const rawContent = await fs.readFile(fullPath);
       const ext = path.extname(filePath).toLowerCase();
       const mimeTypes: Record<string, string> = {
         '.html': 'text/html',
@@ -132,7 +177,27 @@ async function startGameServer(gameId: string, version: string, controller: Abor
         '.wasm': 'application/wasm',
       };
       const contentType = mimeTypes[ext] || 'application/octet-stream';
-      return c.body(content, 200, { 'Content-Type': contentType });
+      const headers = {
+        'Content-Type': contentType,
+        'Content-Security-Policy': cspHeader,
+        'Access-Control-Allow-Origin': 'null',
+      };
+
+      // inject storage blocker script into HTML files
+      if (ext === '.html') {
+        let html = rawContent.toString('utf-8');
+        // insert after <head> or at the start of the document
+        if (html.includes('<head>')) {
+          html = html.replace('<head>', '<head>' + storageBlockerScript);
+        } else if (html.includes('<html>')) {
+          html = html.replace('<html>', '<html><head>' + storageBlockerScript + '</head>');
+        } else {
+          html = storageBlockerScript + html;
+        }
+        return c.body(html, 200, headers);
+      }
+
+      return c.body(new Uint8Array(rawContent), 200, headers);
     } catch (e) {
       console.log(`[GameServer] Not found: ${fullPath}`, e);
       return c.text('Not Found', 404);
@@ -189,10 +254,9 @@ function createWindow(): void {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
 
-  // Auto-grant media permissions for games
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowedPermissions = ['media', 'mediaKeySystem', 'audioCapture', 'videoCapture'];
-    callback(allowedPermissions.includes(permission));
+  // deny all permissions for sandboxed iframe content
+  session.defaultSession.setPermissionRequestHandler((_webContents, _permission, callback) => {
+    callback(false);
   });
 
   // Capture ShiftLeft even when iframe has focus

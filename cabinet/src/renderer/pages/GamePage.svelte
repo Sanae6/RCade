@@ -93,10 +93,6 @@
 
   let frame: HTMLIFrameElement | undefined = $state(undefined);
 
-  setInterval(() => {
-    frame?.focus();
-  }, 100);
-
   async function request_plugin_channels() {
     if (gamePluginPorts === PORTS_TAKEN) {
       await window.rcade.unloadGame(game.id, game.name, game.latestVersion);
@@ -162,13 +158,25 @@
     {/if}
   </div>
 {:else if gameUrl}
-  <iframe
-    bind:this={frame}
-    class="game-frame"
-    src={gameUrl}
-    title={game.name}
-    allow="accelerometer; gyroscope; camera; microphone; autoplay"
-  ></iframe>
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="game-container"
+    onkeydown={(e) => e.stopPropagation()}
+    onkeyup={(e) => e.stopPropagation()}
+    onmousedown={(e) => e.stopPropagation()}
+    onmouseup={(e) => e.stopPropagation()}
+    onmousemove={(e) => e.stopPropagation()}
+    onclick={(e) => e.stopPropagation()}
+  >
+    <iframe
+      bind:this={frame}
+      class="game-frame"
+      src={gameUrl}
+      title={game.name}
+      sandbox="allow-scripts allow-same-origin"
+      allow=""
+    ></iframe>
+  </div>
 {/if}
 
 <style>
@@ -221,13 +229,19 @@
     bottom: 16px;
   }
 
-  .game-frame {
+  .game-container {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
+  }
+
+  .game-frame {
+    width: 100%;
+    height: 100%;
     border: none;
     background: #fff;
+    pointer-events: none;
   }
 </style>
