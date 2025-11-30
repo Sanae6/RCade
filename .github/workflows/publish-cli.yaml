@@ -66,9 +66,12 @@ jobs:
 
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Install to update lockfile
+        run: bun install
+
       - name: Commit and tag
         run: |
-          git add cli/package.json create/package.json
+          git add cli/package.json create/package.json bun.lock
           git commit -m "chore: bump cli versions to ${{ steps.bump.outputs.new_version }}"
           git tag "cli-v${{ steps.bump.outputs.new_version }}"
           git push
