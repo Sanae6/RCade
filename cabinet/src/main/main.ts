@@ -180,25 +180,25 @@ async function startGameServer(gameId: string, version: string, controller: Abor
     get: function() { throw new DOMException('Cache API is disabled', 'SecurityError'); },
     configurable: false
   });
-
-  // dlock keyboard/mouse/touch/pointer events on document
+  // Block keyboard/mouse/touch/pointer events on document
   var blockedEvents = [
     'keydown', 'keyup', 'keypress',
     'click', 'dblclick', 'mousedown', 'mouseup', 'mousemove',
     'mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'contextmenu',
     'wheel', 'scroll',
-    'touchstart', 'touchend', 'touchmove', 'touchcancel',
     'pointerdown', 'pointerup', 'pointermove', 'pointerenter',
     'pointerleave', 'pointerover', 'pointerout', 'pointercancel'
   ];
   var originalDocAddEventListener = document.addEventListener.bind(document);
   document.addEventListener = function(type, listener, options) {
     if (blockedEvents.indexOf(type) !== -1) {
-      throw new DOMException('document.addEventListener("' + type + '") is disabled. Use the input plugin instead.', 'SecurityError');
+      console.error('document.addEventListener("' + type + '") is disabled. Use the input plugin instead.');
+      return;
     }
     return originalDocAddEventListener(type, listener, options);
   };
 })();
+
 </script>`;
 
   app.get('/*', async (c) => {
