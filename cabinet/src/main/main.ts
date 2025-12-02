@@ -46,7 +46,8 @@ if (process.platform === 'linux') {
   }
 }
 
-const apiClient = Client.new();
+const cabinetApiKey = process.env.CABINET_API_KEY;
+const apiClient = cabinetApiKey ? Client.newKeyed(cabinetApiKey) : Client.new();
 
 // Cache directory for game files
 const cacheDir = path.join(app.getPath('userData'), 'game-cache');
