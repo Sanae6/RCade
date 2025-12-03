@@ -3,11 +3,9 @@
   import type { GameInfo } from '../../shared/types';
   import { navigateToGame, getLastPlayedGame } from '../router.svelte';
 
-  const isDev = window.rcade?.getArgs()?.isDev ?? false;
-
   let games = $state<GameInfo[]>([]);
   let currentIndex = $state(0);
-  let fetchInterval: ReturnType<typeof setInterval> | null = null;
+  let unsubscribeMenuKey: (() => void) | undefined;
 
   const currentGame = $derived(games.length > 0 ? games[currentIndex] : null);
 
@@ -65,14 +63,14 @@
 
   onMount(() => {
     fetchGames();
-    if (!isDev) {
-      fetchInterval = setInterval(fetchGames, 5000);
+    if (window.rcade) {
+      unsubscribeMenuKey = window.rcade.onMenuKey(fetchGames);
     }
     window.addEventListener('keydown', handleKeydown);
   });
 
   onDestroy(() => {
-    if (fetchInterval) clearInterval(fetchInterval);
+    unsubscribeMenuKey?.();
     window.removeEventListener('keydown', handleKeydown);
   });
 </script>
