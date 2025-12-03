@@ -48005,7 +48005,7 @@ function superRefine2(fn) {
 // src/api-client.ts
 var import_http_client = __toESM(require_lib3(), 1);
 var import_auth = __toESM(require_auth2(), 1);
-var RECURSE_BASE_URL = "https://rcade.recurse.com/api/v1";
+var RECURSE_BASE_URL = "https://rcade.dev/api/v1";
 var DeploymentIntent = object2({
   upload_url: string6(),
   expires: number6(),
@@ -48068,7 +48068,7 @@ async function uploadFileStream(filePath, presignedUrl) {
 }
 
 // src/index.ts
-var TOKEN_AUDIENCE = "https://rcade.recurse.com";
+var TOKEN_AUDIENCE = "https://rcade.dev";
 async function getIdToken() {
   try {
     const idToken = await core5.getIDToken(TOKEN_AUDIENCE);

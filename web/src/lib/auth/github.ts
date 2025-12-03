@@ -6,7 +6,7 @@ import { env } from "$env/dynamic/private"
 
 const GITHUB_OIDC_ISSUER = "https://token.actions.githubusercontent.com";
 const GITHUB_OIDC_JWKS_URI = `${GITHUB_OIDC_ISSUER}/.well-known/jwks`;
-const ACTION_AUDIENCE = "https://rcade.recurse.com";
+const ACTION_AUDIENCE = "https://rcade.dev";
 
 const GithubOIDCClaims = z.object({
     iss: z.string().nonempty(),

@@ -129,16 +129,14 @@ export const createCommand = new Command("create")
     }
 
     const manifest = {
-        $schema: "https://rcade.recurse.com/manifest.schema.json",
-        name,
-        display_name,
-        description,
-        visibility,
-        ...(versioning === "automatic" ? {} : { version: "1.0.0" }),
-        authors: { display_name: author },
-        dependencies: [
-            { name: "@rcade/input-classic", version: "1.0.0" },
-        ]
+      $schema: "https://rcade.dev/manifest.schema.json",
+      name,
+      display_name,
+      description,
+      visibility,
+      ...(versioning === "automatic" ? {} : { version: "1.0.0" }),
+      authors: { display_name: author },
+      dependencies: [{ name: "@rcade/input-classic", version: "1.0.0" }],
     };
 
     const templatePath = path.join(getTemplatesDir(), templateDirectory);
