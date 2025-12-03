@@ -48136,7 +48136,7 @@ async function run() {
     await uploadFileStream(outputPath, intent.upload_url);
     core5.info(`✅ Uploaded artifact`);
     core5.endGroup();
-    core5.startGroup("\uD83D\uDCE2 Publishing Version");
+    core5.startGroup(`\uD83D\uDCE2 Publishing Version ${intent.version}`);
     await client.publishVersion(manifest.name, intent.version);
     core5.info(`✅ Published version ${intent.version}`);
     core5.endGroup();
