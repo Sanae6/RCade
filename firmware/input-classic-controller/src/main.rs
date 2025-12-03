@@ -35,9 +35,9 @@
 #![no_main]
 
 use core::sync::atomic::{AtomicU8, Ordering};
+use portable_atomic::AtomicI32;
 use defmt::*;
 use embassy_executor::Spawner;
-use embassy_futures::select::{select3, Either3};
 use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::{Input, Pull};
 use embassy_rp::peripherals::{UART0, UART1, USB};
@@ -45,8 +45,6 @@ use embassy_rp::uart::{
     BufferedInterruptHandler, BufferedUart, Config as UartConfig, DataBits, Parity, StopBits,
 };
 use embassy_rp::usb::{Driver, InterruptHandler as UsbInterruptHandler};
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_sync::signal::Signal;
 use embassy_time::Timer;
 use embassy_usb::class::hid::{HidReaderWriter, State};
 use embassy_usb::{Builder, Config, Handler};
@@ -73,15 +71,14 @@ const HID_DESCRIPTOR: &[u8] = &[
     0xC0, // End Collection
 ];
 
-// Spinner signals
-static SPINNER1: Signal<CriticalSectionRawMutex, i32> = Signal::new();
-static SPINNER2: Signal<CriticalSectionRawMutex, i32> = Signal::new();
+// Spinner accumulators (atomic to avoid signal loss)
+static SPINNER1_DELTA: AtomicI32 = AtomicI32::new(0);
+static SPINNER2_DELTA: AtomicI32 = AtomicI32::new(0);
 
 // Input state (updated by input task, read by HID task)
 static P1_STATE: AtomicU8 = AtomicU8::new(0);
 static P2_STATE: AtomicU8 = AtomicU8::new(0);
 static SYSTEM_STATE: AtomicU8 = AtomicU8::new(0);
-static INPUT_CHANGED: Signal<CriticalSectionRawMutex, ()> = Signal::new();
 
 // Input bit masks for p1/p2 (byte 4/5)
 const INPUT_UP: u8 = 1 << 0;
@@ -230,23 +227,18 @@ async fn main(spawner: Spawner) {
 #[embassy_executor::task]
 async fn spinner1_task(mut uart: BufferedUart<'static, UART0>) {
     let mut buf = [0u8; 1];
-    let mut delta = 0i32;
-    let mut count = 0u32;
+    let mut connected = false;
 
     loop {
         if uart.read(&mut buf).await.is_ok() {
-            count += 1;
-            if count == 1 {
+            if !connected {
                 info!("Spinner 1 connected");
+                connected = true;
             }
             match buf[0] {
-                0x01 => delta += 1,
-                0xFE => delta -= 1,
+                0x01 => { SPINNER1_DELTA.fetch_add(1, Ordering::Relaxed); }
+                0xFE => { SPINNER1_DELTA.fetch_add(-1, Ordering::Relaxed); }
                 _ => {}
-            }
-            if count % 4 == 0 && delta != 0 {
-                SPINNER1.signal(delta);
-                delta = 0;
             }
         }
     }
@@ -255,23 +247,18 @@ async fn spinner1_task(mut uart: BufferedUart<'static, UART0>) {
 #[embassy_executor::task]
 async fn spinner2_task(mut uart: BufferedUart<'static, UART1>) {
     let mut buf = [0u8; 1];
-    let mut delta = 0i32;
-    let mut count = 0u32;
+    let mut connected = false;
 
     loop {
         if uart.read(&mut buf).await.is_ok() {
-            count += 1;
-            if count == 1 {
+            if !connected {
                 info!("Spinner 2 connected");
+                connected = true;
             }
             match buf[0] {
-                0x01 => delta += 1,
-                0xFE => delta -= 1,
+                0x01 => { SPINNER2_DELTA.fetch_add(1, Ordering::Relaxed); }
+                0xFE => { SPINNER2_DELTA.fetch_add(-1, Ordering::Relaxed); }
                 _ => {}
-            }
-            if count % 4 == 0 && delta != 0 {
-                SPINNER2.signal(delta);
-                delta = 0;
             }
         }
     }
@@ -343,7 +330,6 @@ async fn input_task(
             P1_STATE.store(p1, Ordering::Relaxed);
             P2_STATE.store(p2, Ordering::Relaxed);
             SYSTEM_STATE.store(sys, Ordering::Relaxed);
-            INPUT_CHANGED.signal(());
             last_p1 = p1;
             last_p2 = p2;
             last_sys = sys;
@@ -358,12 +344,12 @@ async fn hid_task(
     mut writer: embassy_usb::class::hid::HidWriter<'static, Driver<'static, USB>, 8>,
 ) {
     loop {
-        // Wait for any input change
-        let (d1, d2) = match select3(SPINNER1.wait(), SPINNER2.wait(), INPUT_CHANGED.wait()).await {
-            Either3::First(d) => (d, 0),
-            Either3::Second(d) => (0, d),
-            Either3::Third(_) => (0, 0),
-        };
+        // Poll at fixed rate (200Hz = 5ms, matches HID poll_ms)
+        Timer::after_millis(5).await;
+
+        // Atomically read and clear spinner deltas
+        let d1 = SPINNER1_DELTA.swap(0, Ordering::Relaxed);
+        let d2 = SPINNER2_DELTA.swap(0, Ordering::Relaxed);
 
         let d1 = (d1 as i16).clamp(-32767, 32767);
         let d2 = (d2 as i16).clamp(-32767, 32767);
