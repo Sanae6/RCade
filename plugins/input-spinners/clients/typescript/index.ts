@@ -50,18 +50,19 @@ export const STATUS = { connected: false };
 (async () => {
     const channel = await PluginChannel.acquire("@rcade/input-spinners", "^1.0.0");
 
-    STATUS.connected = true;
-
-    const config = await channel.request<{ step_resolution: number }>({ type: "get_config" });
-    stepResolution = config.step_resolution;
-
-    channel.getPort().onmessage = (event) => {
+    // Use addEventListener (not onmessage) to not interfere with PluginChannel's request handling
+    channel.getPort().addEventListener("message", (event) => {
         const { type, spinner1_step_delta, spinner2_step_delta } = event.data;
         if (type === "spinners") {
             if (spinner1_step_delta !== 0) spinner1._update(spinner1_step_delta);
             if (spinner2_step_delta !== 0) spinner2._update(spinner2_step_delta);
         }
-    };
+    });
+
+    const config = await channel.request<{ step_resolution: number }>({ type: "get_config" });
+    stepResolution = config.step_resolution;
+
+    STATUS.connected = true;
 })();
 
 if (import.meta.hot) {
