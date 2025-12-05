@@ -6,13 +6,62 @@ const VID = 0x1209;
 const PID = 0x0001;
 const STEP_RESOLUTION = 64;
 
+const SPINNER_KEY_MAP = {
+    "KeyC": { player: 1, delta: -1 },    // P1 spinner left
+    "KeyV": { player: 1, delta: 1 },     // P1 spinner right
+    "Period": { player: 2, delta: -1 },  // P2 spinner left
+    "Slash": { player: 2, delta: 1 },    // P2 spinner right
+} as const;
+
+const SPINNER_REPEAT_INTERVAL = 16; // ~60Hz repeat rate
+
 export default class InputSpinnersPlugin implements Plugin {
     private environment?: PluginEnvironment;
     private hidDevice?: HID.HID;
+    private keyboardHandler: any;
+    private spinnerIntervals: Map<string, NodeJS.Timeout> = new Map();
+
+    private sendSpinnerMessage(port: MessagePortMain, player: number, delta: number) {
+        port.postMessage({
+            type: "spinners",
+            spinner1_step_delta: player === 1 ? delta : 0,
+            spinner2_step_delta: player === 2 ? delta : 0,
+        });
+    }
 
     start(environment: PluginEnvironment): void {
         this.environment = environment;
-        this.tryOpenHidDevice(environment.getPort());
+        const port = environment.getPort();
+
+        this.setupKeyboardEmulation(environment, port);
+        this.tryOpenHidDevice(port);
+    }
+
+    private setupKeyboardEmulation(environment: PluginEnvironment, port: MessagePortMain): void {
+        this.keyboardHandler = (_: Electron.Event, input: Electron.Input) => {
+            const mapping = SPINNER_KEY_MAP[input.code as keyof typeof SPINNER_KEY_MAP];
+            if (!mapping) return;
+
+            if (input.type === "keyDown" && !this.spinnerIntervals.has(input.code)) {
+                // Send initial step immediately
+                this.sendSpinnerMessage(port, mapping.player, mapping.delta);
+
+                // Start repeating while held
+                const interval = setInterval(() => {
+                    this.sendSpinnerMessage(port, mapping.player, mapping.delta);
+                }, SPINNER_REPEAT_INTERVAL);
+                this.spinnerIntervals.set(input.code, interval);
+            } else if (input.type === "keyUp") {
+                // Stop repeating on key release
+                const interval = this.spinnerIntervals.get(input.code);
+                if (interval) {
+                    clearInterval(interval);
+                    this.spinnerIntervals.delete(input.code);
+                }
+            }
+        };
+
+        environment.getWebContents().on("before-input-event", this.keyboardHandler);
     }
 
     private tryOpenHidDevice(port: MessagePortMain): void {
@@ -62,6 +111,18 @@ export default class InputSpinnersPlugin implements Plugin {
     }
 
     stop(): void {
+        // Clean up keyboard handler
+        if (this.keyboardHandler) {
+            this.environment?.getWebContents()?.off("before-input-event", this.keyboardHandler);
+            this.keyboardHandler = undefined;
+        }
+
+        // Clean up spinner intervals
+        for (const interval of this.spinnerIntervals.values()) {
+            clearInterval(interval);
+        }
+        this.spinnerIntervals.clear();
+
         this.environment = undefined;
 
         if (this.hidDevice) {
