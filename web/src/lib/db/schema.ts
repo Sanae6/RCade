@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { integer, numeric, sqliteTable, text, unique, foreignKey } from 'drizzle-orm/sqlite-core';
+import { index, integer, numeric, sqliteTable, text, unique, foreignKey } from 'drizzle-orm/sqlite-core';
 
 /// Categories
 
@@ -17,7 +17,9 @@ export const games = sqliteTable('games', {
     github_author: text("github_author").notNull(),
     github_repo: text("github_repo").notNull(),
     owner_rc_id: numeric("owner_rc_id").notNull(),
-});
+}, (t) => [
+    index("games_name_idx").on(t.name),
+]);
 
 export const gameVersions = sqliteTable('game_versions', {
     gameId: text("game_id").notNull().references(() => games.id, { onDelete: "cascade" }),
@@ -31,6 +33,7 @@ export const gameVersions = sqliteTable('game_versions', {
     remixOfVersion: text("remix_of_version"),
 }, (t) => [
     unique().on(t.gameId, t.version),
+    index("game_versions_game_id_idx").on(t.gameId),
     foreignKey({
         columns: [t.remixOfGameId, t.remixOfVersion],
         foreignColumns: [t.gameId, t.version],
@@ -47,6 +50,8 @@ export const gameVersionCategories = sqliteTable('game_version_categories', {
         foreignColumns: [gameVersions.gameId, gameVersions.version],
     }).onDelete("cascade"),
     unique().on(t.gameId, t.gameVersion, t.categoryId),
+    index("game_version_categories_game_id_version_idx").on(t.gameId, t.gameVersion),
+    index("game_version_categories_category_id_idx").on(t.categoryId),
 ]);
 
 export const gameDependencies = sqliteTable('game_dependencies', {
@@ -59,6 +64,7 @@ export const gameDependencies = sqliteTable('game_dependencies', {
         columns: [t.gameId, t.gameVersion],
         foreignColumns: [gameVersions.gameId, gameVersions.version],
     }).onDelete("cascade"),
+    index("game_dependencies_game_id_version_idx").on(t.gameId, t.gameVersion),
 ]);
 
 export const gameAuthors = sqliteTable('game_authors', {
@@ -71,6 +77,7 @@ export const gameAuthors = sqliteTable('game_authors', {
         columns: [t.gameId, t.gameVersion],
         foreignColumns: [gameVersions.gameId, gameVersions.version],
     }).onDelete("cascade"),
+    index("game_authors_game_id_version_idx").on(t.gameId, t.gameVersion),
 ]);
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
