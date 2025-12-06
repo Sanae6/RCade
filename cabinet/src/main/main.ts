@@ -336,7 +336,7 @@ function createWindow(): void {
     mainWindow.focus();
   });
 
-  if (isDev) {
+  if (args.devtools ?? isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
   }
 

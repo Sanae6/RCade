@@ -10,6 +10,7 @@ export interface CliOptions {
   manifest: GameManifest | null;
   noExit: boolean;
   dev: boolean;
+  devtools: boolean | undefined;
   scale: number | null;
   overrides: Map<string, string>;
 }

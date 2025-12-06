@@ -26,6 +26,9 @@ export function parseCliArgs(): CliOptions {
             },
             'scale': {
                 type: 'string'
+            },
+            'devtools': {
+                type: 'boolean'
             }
         },
         allowPositionals: true
@@ -62,6 +65,7 @@ export function parseCliArgs(): CliOptions {
         manifest: path ? GameManifest.parse(JSON.parse(readFileSync(path, "utf-8"))) : null,
         noExit: values['no-exit'] ?? false,
         dev: values['dev'] ?? false,
+        devtools: values['devtools'],
         scale,
         overrides
     };

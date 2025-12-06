@@ -10,7 +10,7 @@ export const playCommand = new Command("play")
         try {
             const { binaryPath, info } = await resolveCabinetBinary(options);
 
-            const cabinetArgs = ["--dev", "--no-exit"];
+            const cabinetArgs = ["--dev", "--no-devtools"];
 
             if (options.scale) {
                 cabinetArgs.push("--scale", options.scale);
