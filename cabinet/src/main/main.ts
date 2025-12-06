@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, session, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, session, nativeImage, Menu } from 'electron';
 import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream, existsSync } from 'fs';
@@ -193,7 +193,7 @@ async function startGameServer(gameId: string, version: string, controller: Abor
   var blockedEvents = [
     'keydown', 'keyup', 'keypress',
     'click', 'dblclick', 'mousedown', 'mouseup', 'mousemove',
-    'mouseenter', 'mouseleave', 'mouseover', 'mouseout', 'contextmenu',
+    'mouseenter', 'mouseleave', 'mouseover', 'mouseout',${isDev ? '' : " 'contextmenu',"}
     'wheel', 'scroll',
     'pointerdown', 'pointerup', 'pointermove', 'pointerenter',
     'pointerleave', 'pointerover', 'pointerout', 'pointercancel'
@@ -338,6 +338,18 @@ function createWindow(): void {
 
   if (args.devtools ?? isDev) {
     mainWindow.webContents.openDevTools({ mode: "detach" });
+  }
+
+  // Enable right-click context menu in dev mode for inspect element
+  if (isDev) {
+    mainWindow.webContents.on('context-menu', (_event, params) => {
+      Menu.buildFromTemplate([
+        { label: 'Inspect Element', click: () => mainWindow.webContents.inspectElement(params.x, params.y) },
+        { type: 'separator' },
+        { label: 'Reload', click: () => mainWindow.webContents.reload() },
+        { label: 'Force Reload', click: () => mainWindow.webContents.reloadIgnoringCache() },
+      ]).popup();
+    });
   }
 
   // deny all permissions for sandboxed iframe content

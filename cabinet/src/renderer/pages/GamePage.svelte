@@ -10,6 +10,7 @@
   let { game }: Props = $props();
 
   const PORTS_TAKEN = Symbol();
+  const isDev = window.rcade.getArgs().isDev;
 
   let gameUrl = $state<string | null>(null);
   let loading = $state(true);
@@ -164,6 +165,7 @@
     <iframe
       bind:this={frame}
       class="game-frame"
+      class:no-pointer={!isDev}
       src={gameUrl}
       title={game.name}
       sandbox="allow-scripts allow-same-origin"
@@ -235,6 +237,9 @@
     height: 100%;
     border: none;
     background: #fff;
+  }
+
+  .game-frame.no-pointer {
     pointer-events: none;
   }
 </style>

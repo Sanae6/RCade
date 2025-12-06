@@ -42,7 +42,7 @@ export interface LoadGameResult {
 }
 
 export interface RcadeAPI {
-  getArgs: () => CliOptions;
+  getArgs: () => CliOptions & { isDev: boolean };
   getGames: () => Promise<GameInfo[]>;
   loadGame: (game: GameInfo) => Promise<LoadGameResult>;
   unloadGame: (gameId: string | undefined, gameName: string, version: string | undefined) => Promise<void>;

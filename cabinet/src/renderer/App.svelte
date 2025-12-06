@@ -4,7 +4,10 @@
   import GamePage from "./pages/GamePage.svelte";
 
   const route = $derived(getRoute());
+  const isDev = window.rcade.getArgs().isDev;
 </script>
+
+<svelte:body class:hide-cursor={!isDev} />
 
 {#if route.page === "carousel"}
   <CarouselPage />
@@ -42,7 +45,8 @@
       'NotoColorEmoji';
   }
 
-  :global(*) {
+  :global(body.hide-cursor),
+  :global(body.hide-cursor *) {
     cursor:
       url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="),
       none !important;
