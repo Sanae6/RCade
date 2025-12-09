@@ -35,6 +35,11 @@ const rcadeAPI: RcadeAPI = {
     ipcRenderer.on('menu-key-pressed', listener);
     return () => ipcRenderer.removeListener('menu-key-pressed', listener);
   },
+  onInputActivity: (callback: () => void) => {
+    const listener = () => callback();
+    ipcRenderer.on('input-activity', listener);
+    return () => ipcRenderer.removeListener('input-activity', listener);
+  },
   acquirePlugin: async (name: string, version: string): Promise<{ nonce: string, name: string, version: string }> => {
     const { nonce } = await ipcRenderer.invoke("get-plugin-port", name, version);
 

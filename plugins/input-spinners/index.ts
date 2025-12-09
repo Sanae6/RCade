@@ -93,6 +93,7 @@ export default class InputSpinnersPlugin implements Plugin {
                 const spinner2_step_delta = data.readInt16LE(2);
 
                 if (spinner1_step_delta !== 0 || spinner2_step_delta !== 0) {
+                    environment.getWebContents().send("input-activity");
                     port.postMessage({
                         type: "spinners",
                         spinner1_step_delta,

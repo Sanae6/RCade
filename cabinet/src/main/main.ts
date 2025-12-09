@@ -369,8 +369,11 @@ function createWindow(): void {
 
   // capture menu button even when iframe has focus
   mainWindow.webContents.on("before-input-event", (_event, input) => {
-    if (input.type === "keyDown" && input.code === "Escape" && !args.noExit) {
-      mainWindow.webContents.send("menu-key-pressed");
+    if (input.type === "keyDown") {
+      mainWindow.webContents.send("input-activity");
+      if (input.type === "keyDown" && input.code === "Escape" && !args.noExit) {
+        mainWindow.webContents.send("menu-key-pressed");
+      }
     }
   });
 

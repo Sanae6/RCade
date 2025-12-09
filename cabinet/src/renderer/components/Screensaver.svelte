@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import octopusImg from "/octopus.png";
 
-  const IDLE_TIMEOUT_MS = 15000;
+  const IDLE_TIMEOUT_MS = 30_000;
   const LOGO_SIZE = 60;
   const SPEED = 0.05;
 
@@ -75,9 +75,13 @@
     animationFrame = requestAnimationFrame(animateLogo);
   }
 
+  let unsubscribeInputActivity: (() => void) | undefined;
+
   onMount(() => {
     window.addEventListener('keydown', resetIdleTimer, true);
     window.addEventListener('keyup', resetIdleTimer, true);
+    // Also listen for input activity from main process (captures iframe key events)
+    unsubscribeInputActivity = window.rcade.onInputActivity(resetIdleTimer);
     resetIdleTimer();
   });
 
@@ -86,6 +90,7 @@
     if (animationFrame) cancelAnimationFrame(animationFrame);
     window.removeEventListener('keydown', resetIdleTimer, true);
     window.removeEventListener('keyup', resetIdleTimer, true);
+    unsubscribeInputActivity?.();
   });
 </script>
 
