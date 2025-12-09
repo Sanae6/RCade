@@ -92,7 +92,7 @@
   <div class="screensaver">
     <img
       class="logo"
-      src="/octopus.png"
+      src="./octopus.png"
       alt="Octopus"
       style="left: {logoX}px; top: {logoY}px; width: {LOGO_SIZE}px; height: {LOGO_SIZE}px;"
     />
