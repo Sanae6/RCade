@@ -148,7 +148,7 @@
 
 <div class="carousel" class:up={p2UpPressed} class:down={p2DownPressed} class:left={p2LeftPressed} class:right={p2RightPressed}>
   {#if showFireworks}
-    <Fireworks options={fireworkOptions} />
+    <Fireworks class="fireworks" options={fireworkOptions} />
   {/if}
   {#if currentGame}
     <div class="game-card">
@@ -192,6 +192,14 @@
   }
   .right {
     transform: perspective(400px) rotateY(15deg);
+  }
+
+  :global(.fireworks) {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
   }
 
   .carousel {
