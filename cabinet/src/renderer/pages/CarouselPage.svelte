@@ -13,9 +13,7 @@
   let p2DownPressed = $state<boolean>(false);
   let p2LeftPressed = $state<boolean>(false);
   let p2RightPressed = $state<boolean>(false);
-  let p2aPressed = $state<boolean>(false);
-  let p2bPressed = $state<boolean>(false);
-  let showFireworks = $derived(p2aPressed && p2bPressed);
+  let fireworksComponent: Fireworks;
 
   const currentGame = $derived(games.length > 0 ? games[currentIndex] : null);
 
@@ -80,10 +78,8 @@
       p2LeftPressed = true;
     } else if (key === 'l') {
       p2RightPressed = true;
-    } else if (key === ';') {
-      p2aPressed = true;
-    } else if (key === '\'') {
-      p2bPressed = true;
+    } else if ((key === ';' || key === '\'') && !event.repeat) {
+      fireworksComponent?.fireworksInstance()?.launch(1);
     }
   }
 
@@ -99,10 +95,6 @@
       p2LeftPressed = false;
     } else if (key === 'l') {
       p2RightPressed = false;
-    } else if (key === ';') {
-      p2aPressed = false;
-    } else if (key === '\'') {
-      p2bPressed = false;
     }
   }
 
@@ -147,9 +139,7 @@
 </script>
 
 <div class="carousel" class:up={p2UpPressed} class:down={p2DownPressed} class:left={p2LeftPressed} class:right={p2RightPressed}>
-  {#if showFireworks}
-    <Fireworks class="fireworks" options={fireworkOptions} />
-  {/if}
+  <Fireworks class="fireworks" options={fireworkOptions} bind:this={fireworksComponent} autostart={false} />
   {#if currentGame}
     <div class="game-card">
       <h1 class="game-name">{currentGame.displayName ?? currentGame.name}</h1>
