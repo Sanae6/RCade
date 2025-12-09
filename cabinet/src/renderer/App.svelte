@@ -18,7 +18,9 @@
   });
 </script>
 
-<Screensaver />
+{#if !isDev}
+  <Screensaver />
+{/if}
 
 {#if route.page === "carousel"}
   <CarouselPage />
