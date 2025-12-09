@@ -2,12 +2,15 @@
   import { getRoute } from "./router.svelte";
   import CarouselPage from "./pages/CarouselPage.svelte";
   import GamePage from "./pages/GamePage.svelte";
+  import Screensaver from "./components/Screensaver.svelte";
 
   const route = $derived(getRoute());
   const isDev = window.rcade.getArgs().isDev;
 </script>
 
 <svelte:body class:hide-cursor={!isDev} />
+
+<Screensaver />
 
 {#if route.page === "carousel"}
   <CarouselPage />
