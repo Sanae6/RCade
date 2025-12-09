@@ -6,9 +6,17 @@
 
   const route = $derived(getRoute());
   const isDev = window.rcade.getArgs().isDev;
-</script>
 
-<svelte:body class:hide-cursor={!isDev} />
+  // Hide cursor in production mode
+  $effect(() => {
+    if (!isDev) {
+      document.body.classList.add("hide-cursor");
+    }
+    return () => {
+      document.body.classList.remove("hide-cursor");
+    };
+  });
+</script>
 
 <Screensaver />
 
