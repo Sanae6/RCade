@@ -50,7 +50,23 @@ export class GameVersion {
         return this.apiResponse.displayName;
     }
 
+    public description(): string | null | undefined {
+        return this.apiResponse.description;
+    }
+
+    public visibility(): "public" | "internal" | "private" | null | undefined {
+        return this.apiResponse.visibility;
+    }
+
     public permissions(): Permission[] {
         return this.apiResponse.permissions ?? [];
+    }
+
+    public createdAt(): Date | undefined {
+        if (this.apiResponse.createdAt == undefined) {
+            return undefined;
+        }
+
+        return new Date(this.apiResponse.createdAt)
     }
 }
