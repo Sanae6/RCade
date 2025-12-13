@@ -50,3 +50,33 @@ export async function playGame(game: any, version: string): Promise<void> {
     port.start();
     port.postMessage({ type: "play-game", content: { game, version } });
 }
+
+export async function getLastGame(): Promise<string | undefined> {
+    if (!channel) {
+        throw new Error("Plugin channel not initialized");
+    }
+
+    const cha = await channel;
+    const port = cha.getPort();
+
+    port.start();
+
+    return await new Promise(res => {
+        const nonce = crypto.randomUUID();
+
+        const handleMessage = (event: MessageEvent) => {
+            const { type, nonce: responseNonce, content } = event.data;
+
+            if (responseNonce !== nonce) {
+                return;
+            }
+
+            if (type == "last-game") {
+                port.removeEventListener("message", handleMessage);
+                res(content.lastGameId);
+            }
+        };
+        port.addEventListener("message", handleMessage);
+        port.postMessage({ type: "get-last-game", nonce, content: {} });
+    });
+}

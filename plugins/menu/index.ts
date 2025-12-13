@@ -4,6 +4,7 @@ import { app, type MessagePortMain } from "electron";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { SETTINGS } from "./settings";
 
 const cabinetApiKey = process.env.CABINET_API_KEY;
 const apiClient = cabinetApiKey ? Client.newKeyed(cabinetApiKey) : Client.new();
@@ -46,6 +47,8 @@ async function isGameCached(gameId: string, version: string): Promise<boolean> {
 
 export default class MenuPlugin implements Plugin {
     start(environment: PluginEnvironment): void {
+        SETTINGS.load();
+
         const port = environment.getPort();
 
         console.log(`[@rcade/menu] Menu plugin started, listening for messages on port`);
@@ -71,6 +74,11 @@ export default class MenuPlugin implements Plugin {
             if (type === "play-game") {
                 const { game, version } = content;
                 this.play(environment.getWebContents(), game, version);
+                return;
+            }
+
+            if (type === "get-last-game") {
+                port.postMessage({ type: "last-game", nonce, content: { lastGameId: SETTINGS.lastGameId } });
                 return;
             }
         })
@@ -132,6 +140,10 @@ export default class MenuPlugin implements Plugin {
         const game = Game.fromApiResponse(gameResponse);
 
         console.log(`Playing game ${game.id()} version ${version}`);
+
+        SETTINGS.update(settings => {
+            settings.lastGameId = game.id();
+        });
 
         const gameInfo: GameInfo = {
             id: game.id(),

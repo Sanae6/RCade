@@ -1,7 +1,7 @@
 <script lang="ts">
     import BackgroundOverlay from "$lib/components/BackgroundOverlay.svelte";
     import { fly, slide } from "svelte/transition";
-    import { getGames, playGame } from "@rcade/plugin-menu";
+    import { getGames, getLastGame, playGame } from "@rcade/plugin-menu";
     import { quartOut } from "svelte/easing";
     import { tick, onMount } from "svelte";
     import { Game } from "@rcade/api";
@@ -131,12 +131,17 @@
 
     onMount(async () => {
         games = await loadGames();
-        loading = false;
         if (games.length > 0) {
             tick().then(() => {
                 updateVersionMasks();
                 updateFilterMasks();
                 updatePaginationState();
+                getLastGame().then((id) => {
+                    let index =
+                        filteredGames.findIndex((game) => game.id() == id) ?? 0;
+                    setPage(index);
+                    loading = false;
+                });
             });
         }
     });
@@ -554,7 +559,7 @@
                     </div>
                 </div>
             {/if}
-            {#if currentGame && currentVersion}
+            {#if !loading && currentGame && currentVersion}
                 <div class="top-section">
                     <div class="pagination-wrapper">
                         <div
