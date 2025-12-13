@@ -8,6 +8,7 @@
     import { on as onInput } from "@rcade/plugin-input-classic";
     import { SCREENSAVER } from "@rcade/plugin-sleep";
     import EventEmitter from "events";
+    import { PluginChannel } from "@rcade/sdk";
 
     // Dummy function to load games - replace with actual API call
     async function loadGames(): Promise<Game[]> {
@@ -28,6 +29,73 @@
     SCREENSAVER.addEventListener("stopped", () => {
         screensaverActive = false;
     });
+
+    let delta: number = 0;
+    const DELTA_EPSILON = 50;
+
+    (async () => {
+        const channel = await PluginChannel.acquire(
+            "@rcade/input-spinners",
+            "^1.0.0",
+        );
+
+        // Use addEventListener (not onmessage) to not interfere with PluginChannel's request handling
+        channel.getPort().addEventListener("message", (event: MessageEvent) => {
+            const { type, spinner1_step_delta, spinner2_step_delta } =
+                event.data;
+            if (type === "spinners") {
+                if (spinner1_step_delta !== 0) delta += spinner1_step_delta;
+            }
+        });
+    })();
+
+    function consumeDeltas() {}
+
+    // run consume deltas every frame
+    function frameLoop() {
+        if (Math.abs(delta) >= DELTA_EPSILON) {
+            delta -= Math.sign(delta) * DELTA_EPSILON;
+
+            if (viewportState === "show-bottom" && currentGame) {
+                const newIndex = activeVersionIndex + Math.sign(delta);
+                activeVersionIndex = Math.max(
+                    0,
+                    Math.min(currentGame.versions().length - 1, newIndex),
+                );
+                triggerScroll(
+                    versionsContainer,
+                    activeVersionIndex,
+                    false,
+                    updateVersionMasks,
+                );
+            } else if (viewportState === "show-top") {
+                const newIndex = filterCursorIndex + Math.sign(delta);
+                filterCursorIndex = Math.max(
+                    0,
+                    Math.min(uniqueTags.length - 1, newIndex),
+                );
+                triggerScroll(
+                    filtersContainer,
+                    filterCursorIndex,
+                    false,
+                    updateFilterMasks,
+                );
+            } else {
+                const newPage = activePage + Math.sign(delta);
+                const clampedPage = Math.max(
+                    0,
+                    Math.min(totalPages - 1, newPage),
+                );
+                if (clampedPage !== activePage) {
+                    setPage(clampedPage);
+                    moveEvents.emit("move", delta < 0); // Emit true for left
+                }
+            }
+        }
+
+        requestAnimationFrame(frameLoop);
+    }
+    requestAnimationFrame(frameLoop);
 
     let games: Game[] = [];
     let loading = true;
