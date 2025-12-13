@@ -1,14 +1,57 @@
 /// <reference lib="webworker" />
 
-// Polyfill ReadableStream async iterator for Safari compatibility
-// Safari doesn't support ReadableStream[Symbol.asyncIterator] which modern-tar requires
-if (typeof ReadableStream.prototype[Symbol.asyncIterator] !== "function") {
-    await import("web-streams-polyfill/polyfill");
-}
-
 import { Client } from "@rcade/api";
-// Dynamically import modern-tar after polyfill to ensure Safari compatibility
-const { unpackTar } = await import("modern-tar");
+import { createTarDecoder } from "modern-tar";
+
+// Safari-compatible unpackTar that doesn't use for-await-of on ReadableStream
+// (Safari doesn't support ReadableStream[Symbol.asyncIterator])
+async function unpackTar(archive: ReadableStream<Uint8Array> | Uint8Array | ArrayBuffer) {
+    const sourceStream = archive instanceof ReadableStream ? archive : new ReadableStream({
+        start(controller) {
+            controller.enqueue(archive instanceof Uint8Array ? archive : new Uint8Array(archive));
+            controller.close();
+        }
+    });
+
+    const entryStream = sourceStream.pipeThrough(createTarDecoder());
+    const reader = entryStream.getReader();
+    const results: Array<{ header: any; data: Uint8Array | undefined }> = [];
+
+    while (true) {
+        const { done, value: entry } = await reader.read();
+        if (done) break;
+
+        const isBodyless = entry.header.type !== "file" && entry.header.type !== "0";
+
+        if (isBodyless) {
+            await entry.body.cancel();
+            results.push({ header: entry.header, data: undefined });
+        } else {
+            // Read the body stream manually
+            const bodyReader = entry.body.getReader();
+            const chunks: Uint8Array[] = [];
+            let totalLength = 0;
+
+            while (true) {
+                const { done: bodyDone, value: chunk } = await bodyReader.read();
+                if (bodyDone) break;
+                chunks.push(chunk);
+                totalLength += chunk.length;
+            }
+
+            const data = new Uint8Array(totalLength);
+            let offset = 0;
+            for (const chunk of chunks) {
+                data.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            results.push({ header: entry.header, data });
+        }
+    }
+
+    return results;
+}
 import { getMimeType } from "./mime";
 import { read, remove, write } from "./persistence";
 import * as cheerio from "cheerio";
