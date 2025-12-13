@@ -664,13 +664,24 @@
         color: var(--color-primary);
         letter-spacing: 0.1em;
     }
-
     .version-drawer,
     .filter-drawer {
         position: absolute;
         left: 0;
         width: 100%;
-        background: #000;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0;
+        box-sizing: border-box;
+        gap: 6px;
+    }
+    .version-drawer,
+    .filter-drawer {
+        position: absolute;
+        left: 0;
+        width: 100%;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -683,13 +694,43 @@
     .version-drawer {
         top: 100%;
         height: var(--drawer-height);
-        border-top: 1px solid rgba(255, 255, 255, 0.15);
+        background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(250, 204, 21, 0.03) 2px,
+                rgba(250, 204, 21, 0.03) 4px
+            ),
+            linear-gradient(
+                to bottom,
+                rgba(250, 204, 21, 0.08),
+                rgba(250, 204, 21, 0.05)
+            );
+        border-top: 1px solid rgba(250, 204, 21, 0.4);
+        box-shadow:
+            0 -4px 20px rgba(250, 204, 21, 0.1),
+            inset 0 1px 0 rgba(250, 204, 21, 0.2);
     }
 
     .filter-drawer {
         bottom: 100%;
         height: var(--filter-drawer-height);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(250, 204, 21, 0.03) 2px,
+                rgba(250, 204, 21, 0.03) 4px
+            ),
+            linear-gradient(
+                to top,
+                rgba(250, 204, 21, 0.08),
+                rgba(250, 204, 21, 0.05)
+            );
+        border-bottom: 1px solid rgba(250, 204, 21, 0.4);
+        box-shadow:
+            0 4px 20px rgba(250, 204, 21, 0.1),
+            inset 0 -1px 0 rgba(250, 204, 21, 0.2);
     }
 
     .drawer-header {
@@ -924,7 +965,7 @@
         height: 3px;
         flex-shrink: 0;
         border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.75);
         transition: all 0.3s;
         cursor: pointer;
     }
