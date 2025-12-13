@@ -162,6 +162,7 @@
                     0xfacc15,
                 );
                 camera.position.x += 0.002;
+                targetCameraX = camera.position.x;
             } else {
                 gridMaterial.uniforms.uOpacity.value = 0.7;
             }
@@ -185,8 +186,7 @@
 
         const handleMove = (isLeft: boolean) => {
             const moveDirection = isLeft ? -1 : 1;
-            const newTargetX =
-                camera.position.x + moveDirection * CAMERA_MOVE_STEP;
+            const newTargetX = targetCameraX + moveDirection * CAMERA_MOVE_STEP;
             targetCameraX = newTargetX;
 
             if (currentAnimationId) {
