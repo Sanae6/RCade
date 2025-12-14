@@ -4,6 +4,14 @@ let channel: Promise<PluginChannel> | null = null;
 
 (async () => {
     channel = PluginChannel.acquire("@rcade/menu", "^1.0.0");
+
+    channel.then(channel => {
+        channel.getPort().addEventListener("message", (event) => {
+            if (event.data.type === "quit_game") {
+                quitHandler?.();
+            }
+        })
+    });
 })();
 
 export async function getGames(): Promise<any[]> {
@@ -79,4 +87,9 @@ export async function getLastGame(): Promise<string | undefined> {
         port.addEventListener("message", handleMessage);
         port.postMessage({ type: "get-last-game", nonce, content: {} });
     });
+}
+
+let quitHandler: (() => void) | undefined = undefined;
+export function onGameQuit(handler: () => void) {
+    quitHandler = handler;
 }

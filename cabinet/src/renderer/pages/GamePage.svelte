@@ -19,7 +19,6 @@
   async function loadGame() {
     try {
       if (window.rcade) {
-        await window.rcade.unloadGame(game.id, game.name, game.latestVersion);
         const { url } = await window.rcade.loadGame($state.snapshot(game));
 
         gameUrl = url;
@@ -41,7 +40,7 @@
   let unsubscribeMenuKey: (() => void) | undefined;
 
   onMount(() => {
-    if (window.rcade) {
+    if (window.rcade && game.name !== "menu") {
       unsubscribeMenuKey = window.rcade.onMenuKey(handleMenuKey);
     }
 
@@ -61,9 +60,10 @@
   const receivedPorts = new Map<string, MessagePort>();
 
   onMount(() => {
+    const instance = crypto.randomUUID();
     const handleMessage = async (event: MessageEvent) => {
       // Handle ports transferred from preload script
-      if (event.data?.type === "plugin-port-transfer") {
+      if (event.data?.type === "plugin-port-transfer" && event.data.gameInstance == instance) {
         const { nonce } = event.data;
         const port = event.ports[0];
         if (port) {
@@ -82,6 +82,7 @@
           const { nonce, name, version } = await window.rcade.acquirePlugin(
             event.data.channel.name,
             event.data.channel.version,
+            instance
           );
 
           // Wait for the port to arrive via postMessage
