@@ -109,7 +109,14 @@ g.addEventListener("fetch", (event: FetchEvent) => {
                 responding = logger.because(handle).debug(`Responding for ${CURRENT_GAME[0]} @ ${CURRENT_GAME[1]}`);
 
                 const cache = await caches.open(`${CURRENT_GAME[0]}/${CURRENT_GAME[1]}`);
-                const response = await cache.match(new URL(`https://${CURRENT_GAME[1]}.${CURRENT_GAME[0]}.rcade-game${url.pathname}`));
+
+                let path = url.pathname;
+
+                if (path === "/") {
+                    path = "/index.html"
+                }
+
+                const response = await cache.match(new URL(`https://${CURRENT_GAME[1]}.${CURRENT_GAME[0]}.rcade-game${path}`));
 
                 if (!response) {
                     logger.because(responding).warn("Request for missing asset", url.pathname);
