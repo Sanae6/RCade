@@ -131,19 +131,26 @@
 
     onMount(async () => {
         games = await loadGames();
-        if (games.length > 0) {
-            tick().then(() => {
-                updateVersionMasks();
-                updateFilterMasks();
-                updatePaginationState();
+
+        tick().then(() => {
+            updateVersionMasks();
+            updateFilterMasks();
+            updatePaginationState();
+
+            if (games.length > 0) {
                 getLastGame().then((id) => {
-                    let index =
-                        filteredGames.findIndex((game) => game.id() == id) ?? 0;
-                    setPage(index);
+                    let index = filteredGames.findIndex(
+                        (game) => game.id() == id,
+                    );
+
+                    if (index != -1) setPage(index);
+
                     loading = false;
                 });
-            });
-        }
+            } else {
+                loading = false;
+            }
+        });
     });
 
     // --- FILTER LOGIC ---
