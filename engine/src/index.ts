@@ -265,6 +265,8 @@ export class RCadeWebEngine {
     }
 
     private async moveTo(path: string) {
+        this.port.removeEventListener("message", this.port_listener);
+
         const { message, port } = await RCadeWebEngine.move(this.logger, this.iframe, new URL(path, this.appUrl).toString());
 
         this.port = port;
