@@ -42,7 +42,6 @@ export interface GameInfo {
 }
 
 export type Route =
-  | { page: 'carousel' }
   | { page: 'blank' }
   | { page: 'game'; game: GameInfo };
 
@@ -62,6 +61,6 @@ export interface RcadeAPI {
   onScreensaverConfigChanged: (callback: (config: ScreensaverConfig) => void) => () => void;
   screensaverStarted: () => void;
   screensaverStopped: () => void;
-  acquirePlugin: (name: string, version: string) => Promise<{ nonce: string, name: string, version: string }>;
+  acquirePlugin: (name: string, version: string, gameInstance: string) => Promise<{ nonce: string, name: string, version: string }>;
   onRoute: (callback: (route: Route) => void) => () => void;
 }
