@@ -1,36 +1,48 @@
 /// <reference lib="webworker" />
 
+// Polyfill ReadableStream async iterator for Safari
+// Must be done before any imports that might use it (specifically modern-tar)
+if (typeof ReadableStream !== 'undefined' && !ReadableStream.prototype[Symbol.asyncIterator]) {
+    (ReadableStream.prototype as any)[Symbol.asyncIterator] = async function* (this: ReadableStream) {
+        const reader = this.getReader();
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) return;
+                yield value;
+            }
+        } finally {
+            reader.releaseLock();
+        }
+    };
+}
+
 import { Client } from "@rcade/api";
 import { unpackTar } from "modern-tar";
 import { ungzip } from "pako";
 import { getMimeType } from "./mime";
 import { read, remove, write } from "./persistence";
-import * as cheerio from "cheerio";
-import { inject } from "../lib/inject";
-import * as acorn from 'acorn';
 
 const DEV_MODE = false;
 
-function getFunctionBody(fn: (...vals: any[]) => any) {
-    const code = fn.toString();
-
-    // Parse the function
-    const ast = acorn.parse(code, { ecmaVersion: 2020 });
-
-    // The function will be the first node in the program body
-    const functionNode = ast.body[0];
-
-    if (functionNode.type === 'FunctionDeclaration') {
-        // Extract just the body content (between the braces)
-        const bodyStart = functionNode.body.start;
-        const bodyEnd = functionNode.body.end;
-
-        // Get the content, removing the outer braces
-        return code.slice(bodyStart + 1, bodyEnd - 1).trim();
-    }
-
-    throw new Error('Not a function declaration');
-}
+const INJECT_SCRIPT = `(async () => {
+    const registration = await navigator.serviceWorker.ready;
+    const sw = registration.active;
+    const messageChannel = new MessageChannel();
+    const hello = new Promise((resolve) => {
+        const listener = (event) => {
+            if (event.data && event.data.type === "PORT_INIT") {
+                messageChannel.port1.removeEventListener("message", listener);
+                resolve(event.data.content);
+            }
+        };
+        messageChannel.port1.addEventListener("message", listener);
+        messageChannel.port1.start();
+    });
+    sw.postMessage({ type: "INIT_PORT" }, [messageChannel.port2]);
+    const content = await hello;
+    window.parent.postMessage({ type: "SW_PORT_READY", content }, "*", [messageChannel.port1]);
+})();`;
 
 function determineDevUrl(url: URL) {
     if (url.pathname.startsWith("/@fs"))
@@ -95,13 +107,22 @@ g.addEventListener("fetch", (event: FetchEvent) => {
             }
 
             if (response.headers.get("Content-Type")?.toLowerCase().includes("text/html")) {
-                const $ = cheerio.load(await response.text());
-                $('head').prepend(`
-                    <script>
-                        (function() { ${getFunctionBody(inject)} })();
-                    </script>
-                `)
-                return new Response($.html(), {
+                const html = await response.text();
+                const scriptTag = `<script>${INJECT_SCRIPT}</script>`;
+
+                let injectedHtml: string;
+                if (/<head(\s[^>]*)?>|<head>/i.test(html)) {
+                    // first try to insert after <head> tag
+                    injectedHtml = html.replace(/<head(\s[^>]*)?>|<head>/i, (match) => match + scriptTag);
+                } else if (/<html(\s[^>]*)?>|<html>/i.test(html)) {
+                    // if <head>, insert after <html> tag
+                    injectedHtml = html.replace(/<html(\s[^>]*)?>|<html>/i, (match) => match + scriptTag);
+                } else {
+                    // else if no <head> or <html>, prepend to document
+                    injectedHtml = scriptTag + html;
+                }
+
+                return new Response(injectedHtml, {
                     headers: { "Content-Type": "text/html" }
                 });
             }
@@ -285,16 +306,15 @@ export async function loadGame(game_id: string, version: string | "latest") {
     }
 
     announceProgress({ state: "unpacking" });
-    // Pass Uint8Array to unpackTar (avoids Safari's lack of Symbol.asyncIterator on ReadableStream)
     const entries = await unpackTar(decompressedData);
 
     const file_count = entries.filter(entry => entry.header.type === "file").length;
 
     for (const entry of entries) {
         if (entry.header.type === "file") {
-            const response = new Response((entry.data?.buffer as ArrayBuffer) ?? new ArrayBuffer(0));
-
-            response.headers.set("Content-Type", getMimeType(entry.header.name));
+            const response = new Response(entry.data ?? new Uint8Array(0), {
+                headers: { "Content-Type": getMimeType(entry.header.name) }
+            });
 
             const path = resolveAbsolutePath(entry.header.name, "/", game_id, ver.version());
 
