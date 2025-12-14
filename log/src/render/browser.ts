@@ -41,7 +41,7 @@ export class BrowserLogRenderer {
         let depth = 1;
 
         while (currentCause) {
-            // PASS THE ROOT ENTRY TIME to calculate relative diff
+            // PASS THE ROOT ENTRY TIME to calculate relative diff for causes
             const causeStyle = this.formatLogArgs(currentCause, entry.time);
 
             // We prepend a visual arrow and depth indicator to the cause
@@ -67,7 +67,8 @@ export class BrowserLogRenderer {
     /**
      * Helper to generate the format string and style arguments for a single entry.
      * @param entry The log entry to format
-     * @param relativeTo If provided, formats time as a delta (+/- ms/s) relative to this date
+     * @param relativeTo If provided, formats time as a delta (+/- ms/s) relative to this date. 
+     * If undefined, implies this is the root entry being currently rendered.
      */
     private static formatLogArgs(entry: LogEntry, relativeTo?: Date): { format: string, args: string[] } {
         const config = PALETTE[entry.level as keyof typeof PALETTE] || PALETTE.DEFAULT;
@@ -76,7 +77,7 @@ export class BrowserLogRenderer {
         let timeStr: string;
 
         if (relativeTo) {
-            // Calculate Delta
+            // Calculate Delta (Historical Cause vs Root)
             const diff = entry.time.getTime() - relativeTo.getTime();
             timeStr = this.formatTimeDelta(diff);
         } else {
@@ -116,9 +117,34 @@ export class BrowserLogRenderer {
         const styleReset = `${fontBase} color: inherit; margin-left: 5px;`;
 
         // Build Format String
-        // Added padEnd to timeStr to ensure alignment between relative (shorter) and absolute timestamps if mixed visually
         let formatString = `%c${timeStr} %c${config.icon} ${entry.level.toUpperCase()}`;
         const args: string[] = [styleTime, styleLevel];
+
+        // Only check latency for the root entry (when relativeTo is undefined)
+        if (!relativeTo) {
+            const now = Date.now();
+            const latency = now - entry.time.getTime();
+
+            // Threshold: 10ms
+            if (latency > 10) {
+                const styleDelayed = `
+                    ${fontBase}
+                    font-size: 9px;
+                    color: #d97706; /* amber-600 */
+                    background-color: #fffbeb; /* amber-50 */
+                    border: 1px solid #fcd34d; /* amber-300 */
+                    border-radius: 4px;
+                    padding: 1px 4px;
+                    margin-left: 4px;
+                    vertical-align: middle;
+                `;
+
+                // Add the badge to format string
+                formatString += `%c⏱ DELAYED ${this.formatTimeDelta(latency, false)}`;
+                args.push(styleDelayed);
+            }
+        }
+        // ----------------------------------
 
         entry.modules.forEach((mod, i) => {
             formatString += `%c${i == 0 ? " " : "/"}%c${mod}`;
@@ -135,10 +161,13 @@ export class BrowserLogRenderer {
     /**
      * Converts milliseconds to a short, human-readable delta string.
      * Examples: +5ms, -12ms, +1.2s, +5m, +1h
+     * @param showSign If false, suppresses the '+' sign for positive numbers (useful for latency badge)
      */
-    private static formatTimeDelta(ms: number): string {
+    private static formatTimeDelta(ms: number, showSign = true): string {
         const abs = Math.abs(ms);
-        const sign = ms > 0 ? '+' : '-';
+        let sign = ms > 0 ? '+' : '-';
+
+        if (!showSign && ms > 0) sign = '';
 
         if (abs < 1000) {
             return `${sign}${abs}ms`;
