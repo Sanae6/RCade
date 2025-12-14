@@ -6,9 +6,9 @@
     import { tick, onMount } from "svelte";
     import { Game } from "@rcade/api";
     import { on as onInput } from "@rcade/plugin-input-classic";
+    import { PLAYER_1 as SPINNERS_P1 } from "@rcade/plugin-input-spinners";
     import { SCREENSAVER } from "@rcade/plugin-sleep";
     import EventEmitter from "events";
-    import { PluginChannel } from "@rcade/sdk";
     import { Fireworks, type FireworksOptions } from "@fireworks-js/svelte";
 
     // Dummy function to load games - replace with actual API call
@@ -31,47 +31,34 @@
         screensaverActive = false;
     });
 
-    let delta: number = 0;
     const DELTA_EPSILON = 10;
-
-    (async () => {
-        const channel = await PluginChannel.acquire(
-            "@rcade/input-spinners",
-            "^1.0.0",
-        );
-
-        // Use addEventListener (not onmessage) to not interfere with PluginChannel's request handling
-        channel.getPort().addEventListener("message", (event: MessageEvent) => {
-            const { type, spinner1_step_delta, spinner2_step_delta } =
-                event.data;
-            if (type === "spinners") {
-                if (spinner1_step_delta !== 0) delta += spinner1_step_delta;
-            }
-        });
-    })();
+    let accumulatedDelta = 0;
 
     // run consume deltas every frame
     function frameLoop() {
+        // Read spinner delta (resets after read) and accumulate
+        accumulatedDelta += SPINNERS_P1.SPINNER.step_delta;
+
         // for every DELTA_EPSILON in delta, emit left/right move
-        while (Math.abs(delta) >= DELTA_EPSILON) {
+        while (Math.abs(accumulatedDelta) >= DELTA_EPSILON) {
             if (viewportState === "neutral") {
-                if (delta > 0) {
+                if (accumulatedDelta > 0) {
                     const newPage = Math.min(totalPages - 1, activePage + 1);
                     if (newPage !== activePage) {
                         setPage(newPage);
                         moveEvents.emit("move", false); // Emit false for right
                     }
-                    delta -= DELTA_EPSILON;
-                } else if (delta < 0) {
+                    accumulatedDelta -= DELTA_EPSILON;
+                } else if (accumulatedDelta < 0) {
                     const newPage = Math.max(0, activePage - 1);
                     if (newPage !== activePage) {
                         setPage(newPage);
                         moveEvents.emit("move", true); // Emit true for left
                     }
-                    delta += DELTA_EPSILON;
+                    accumulatedDelta += DELTA_EPSILON;
                 }
             } else if (viewportState === "show-top") {
-                if (delta > 0) {
+                if (accumulatedDelta > 0) {
                     const newIndex = Math.min(
                         uniqueTags.length - 1,
                         filterCursorIndex + 1,
@@ -83,8 +70,8 @@
                         false,
                         updateFilterMasks,
                     );
-                    delta -= DELTA_EPSILON;
-                } else if (delta < 0) {
+                    accumulatedDelta -= DELTA_EPSILON;
+                } else if (accumulatedDelta < 0) {
                     const newIndex = Math.max(0, filterCursorIndex - 1);
                     filterCursorIndex = newIndex;
                     triggerScroll(
@@ -93,10 +80,10 @@
                         false,
                         updateFilterMasks,
                     );
-                    delta += DELTA_EPSILON;
+                    accumulatedDelta += DELTA_EPSILON;
                 }
             } else if (viewportState === "show-bottom" && currentGame) {
-                if (delta > 0) {
+                if (accumulatedDelta > 0) {
                     const newIndex = Math.min(
                         currentGame.versions().length - 1,
                         activeVersionIndex + 1,
@@ -108,8 +95,8 @@
                         false,
                         updateVersionMasks,
                     );
-                    delta -= DELTA_EPSILON;
-                } else if (delta < 0) {
+                    accumulatedDelta -= DELTA_EPSILON;
+                } else if (accumulatedDelta < 0) {
                     const newIndex = Math.max(0, activeVersionIndex - 1);
                     activeVersionIndex = newIndex;
                     triggerScroll(
@@ -118,7 +105,7 @@
                         false,
                         updateVersionMasks,
                     );
-                    delta += DELTA_EPSILON;
+                    accumulatedDelta += DELTA_EPSILON;
                 }
             }
         }
@@ -130,32 +117,35 @@
     let games: Game[] = [];
     let loading = true;
 
-    onMount(async () => {
-        games = await loadGames();
-
-        tick().then(() => {
-            updateVersionMasks();
-            updateFilterMasks();
-            updatePaginationState();
-
-            if (games.length > 0) {
-                getLastGame().then((id) => {
-                    let index = filteredGames.findIndex(
-                        (game) => game.id() == id,
-                    );
-
-                    if (index != -1) setPage(index);
-
-                    loading = false;
-                });
-            } else {
-                loading = false;
-            }
-        });
-
-        // register input handlers
+    onMount(() => {
+        // Register input handlers
         const unsubPress = registerPressHandler();
         const unsubInputEnd = registerInputEndHandler();
+
+        // Load games
+        loadGames().then((loadedGames) => {
+            games = loadedGames;
+
+            tick().then(() => {
+                updateVersionMasks();
+                updateFilterMasks();
+                updatePaginationState();
+
+                if (games.length > 0) {
+                    getLastGame().then((id) => {
+                        let index = filteredGames.findIndex(
+                            (game) => game.id() == id,
+                        );
+
+                        if (index != -1) setPage(index);
+
+                        loading = false;
+                    });
+                } else {
+                    loading = false;
+                }
+            });
+        });
 
         return () => {
             unsubPress();
