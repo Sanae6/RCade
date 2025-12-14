@@ -2,6 +2,7 @@
 
 import { Client } from "@rcade/api";
 import { unpackTar } from "modern-tar";
+import { ungzip } from "pako";
 import { getMimeType } from "./mime";
 import { read, remove, write } from "./persistence";
 import * as cheerio from "cheerio";
@@ -256,17 +257,20 @@ export async function loadGame(game_id: string, version: string | "latest") {
         announceProgress({ state: "downloading", progress, total });
     }
 
-    const contentBlob = new Blob(chunks);
-
-    // response is a .tar.gz
+    // response is a .tar.gz - combine chunks into Uint8Array
+    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
+    const compressedData = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+        compressedData.set(chunk, offset);
+        offset += chunk.length;
+    }
 
     announceProgress({ state: "opening" });
     const cache = await caches.open(`${game_id}/${ver.version()}`);
 
-    // Decompress gzip to ArrayBuffer (Safari-compatible, avoids ReadableStream async iteration)
-    const ds = new DecompressionStream('gzip');
-    const decompressedStream = contentBlob.stream().pipeThrough(ds);
-    const decompressedBuffer = await new Response(decompressedStream).arrayBuffer();
+    // Decompress gzip using pako (pure JS, Safari-compatible)
+    const decompressedData = ungzip(compressedData);
 
     const cache_keys = await cache.keys();
 
@@ -281,8 +285,8 @@ export async function loadGame(game_id: string, version: string | "latest") {
     }
 
     announceProgress({ state: "unpacking" });
-    // Pass ArrayBuffer to unpackTar instead of stream to avoid Safari's lack of Symbol.asyncIterator on ReadableStream
-    const entries = await unpackTar(decompressedBuffer);
+    // Pass Uint8Array to unpackTar (avoids Safari's lack of Symbol.asyncIterator on ReadableStream)
+    const entries = await unpackTar(decompressedData);
 
     const file_count = entries.filter(entry => entry.header.type === "file").length;
 
