@@ -14,6 +14,10 @@ on:
       - 'package.json'
     
 
+env:
+  DO_NOT_TRACK: 1
+  TURBO_TELEMETRY_DISABLED: 1
+
 jobs:
   build-and-deploy:
     name: Build and Deploy Web

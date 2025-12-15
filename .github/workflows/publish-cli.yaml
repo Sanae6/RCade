@@ -17,6 +17,10 @@ concurrency:
   group: repo-commits
   cancel-in-progress: false
 
+env:
+  DO_NOT_TRACK: 1
+  TURBO_TELEMETRY_DISABLED: 1
+
 jobs:
   bump:
     name: Bump versions
