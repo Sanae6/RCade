@@ -24,8 +24,6 @@
         );
     }
 
-    SCREENSAVER.updateScreensaver({ transparent: true });
-
     let screensaverActive = false;
 
     SCREENSAVER.addEventListener("started", () => {
@@ -152,6 +150,14 @@
                 }
             });
         });
+
+        const int = setInterval(() => {
+            SCREENSAVER.updateScreensaver({ transparent: !gameActive });
+        }, 1000);
+
+        const unsubScreensaver = () => {
+            clearInterval(int);
+        };
 
         return () => {
             unsubPress();

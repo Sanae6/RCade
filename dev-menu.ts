@@ -42,7 +42,7 @@ async function main() {
         cwd: cabinetDir,
         env: {
             ...process.env,
-            RCADE_CABINET_ARGS: `--menu "${menuManifest}" --scale 4 --dev --override menu@LOCAL=http://localhost:8811`,
+            RCADE_CABINET_ARGS: `--menu "${menuManifest}" --force-screensaver --scale 4 --dev --override menu@LOCAL=http://localhost:8811`,
         },
         stdout: "pipe",
         stderr: "pipe",

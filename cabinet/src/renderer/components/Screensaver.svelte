@@ -8,8 +8,8 @@
   const SPEED = 0.05;
   const DEFAULT_CONFIG: Required<ScreensaverConfig> = {
     transparent: false,
-    visible: true
-  }
+    visible: true,
+  };
 
   let config: Required<ScreensaverConfig> = $state(DEFAULT_CONFIG);
 
@@ -97,23 +97,24 @@
 
   let unsubscribeInputActivity: (() => void) | undefined;
   let unsubscribeScreensaverConfigChanged: (() => void) | undefined;
-  let unsubscribeUnloadGame: (() => void) | undefined; 
+  let unsubscribeUnloadGame: (() => void) | undefined;
 
   onMount(() => {
-    window.addEventListener('keydown', resetIdleTimer, true);
-    window.addEventListener('keyup', resetIdleTimer, true);
+    window.addEventListener("keydown", resetIdleTimer, true);
+    window.addEventListener("keyup", resetIdleTimer, true);
     // Also listen for input activity from main process (captures iframe key events)
     unsubscribeInputActivity = window.rcade.onInputActivity(resetIdleTimer);
-    unsubscribeScreensaverConfigChanged = window.rcade.onScreensaverConfigChanged(screensaverConfigChanged);
-    unsubscribeUnloadGame = window.rcade.onUnloadGame(unloadedGame)
+    unsubscribeScreensaverConfigChanged =
+      window.rcade.onScreensaverConfigChanged(screensaverConfigChanged);
+    unsubscribeUnloadGame = window.rcade.onUnloadGame(unloadedGame);
     resetIdleTimer();
   });
 
   onDestroy(() => {
     if (idleTimer) clearTimeout(idleTimer);
     if (animationFrame) cancelAnimationFrame(animationFrame);
-    window.removeEventListener('keydown', resetIdleTimer, true);
-    window.removeEventListener('keyup', resetIdleTimer, true);
+    window.removeEventListener("keydown", resetIdleTimer, true);
+    window.removeEventListener("keyup", resetIdleTimer, true);
     unsubscribeInputActivity?.();
     unsubscribeScreensaverConfigChanged?.();
     unsubscribeUnloadGame?.();
@@ -142,7 +143,7 @@
   }
 
   .black-bg {
-    background: #000
+    background: #000;
   }
 
   .logo {
