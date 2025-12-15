@@ -52,10 +52,10 @@ export async function play_menu_move(): Promise<void> {
 
     // Map frequency to pitch: 0-20 calls/sec -> 0.85-1.15 playback rate
     // Uses a logarithmic-like curve for more natural feel
-    const basePitch = 0.45 + Math.min(callsPerSecond / 15, 2) * 0.3;
+    const basePitch = 0.45 + Math.min(callsPerSecond / 15, 1.5) * 0.3;
 
-    // Add small random variation on top (±3%)
-    const pitchVariation = basePitch + (Math.random() - 0.5) * 0.06;
+    // Add small random variation on top (±5%)
+    const pitchVariation = basePitch + (Math.random() - 0.5) * 0.1;
 
     // Create a new source for this playback
     const source = audioContext.createBufferSource();
@@ -67,8 +67,8 @@ export async function play_menu_move(): Promise<void> {
     // Apply pitch
     source.playbackRate.value = pitchVariation;
 
-    // Slight volume variation for more natural feel: 0.7 to 1.0
-    const volumeVariation = 0.7 + Math.random() * 0.3;
+    // Slight volume variation for more natural feel: 0.2 to 0.5
+    const volumeVariation = 0.2 + Math.random() * 0.3;
     gainNode.gain.value = volumeVariation;
 
     // Connect: source -> gain -> destination
