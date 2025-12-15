@@ -151,14 +151,6 @@
             });
         });
 
-        const int = setInterval(() => {
-            SCREENSAVER.updateScreensaver({ transparent: !gameActive });
-        }, 1000);
-
-        const unsubScreensaver = () => {
-            clearInterval(int);
-        };
-
         return () => {
             unsubPress();
             unsubInputEnd();
@@ -198,6 +190,7 @@
     let direction = 1;
     let viewportState: "neutral" | "show-top" | "show-bottom" = "neutral";
     let gameActive = false;
+    SCREENSAVER.updateScreensaver({ transparent: true });
 
     let versionsContainer: HTMLDivElement;
     let filtersContainer: HTMLDivElement;
@@ -392,6 +385,7 @@
         // todo: handle quit error
         console.error(quitOptions);
         gameActive = false;
+        SCREENSAVER.updateScreensaver({ transparent: true });
     });
 
     onGameLoad((result) => {
@@ -399,6 +393,7 @@
             gameError = result.error;
         } else {
             gameActive = true;
+            SCREENSAVER.updateScreensaver({ transparent: false });
         }
 
         gameLoading = false;

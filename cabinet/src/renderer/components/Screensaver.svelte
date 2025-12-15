@@ -91,13 +91,8 @@
     config = Object.assign(config, newConfig);
   }
 
-  function unloadedGame() {
-    config = Object.create(DEFAULT_CONFIG);
-  }
-
   let unsubscribeInputActivity: (() => void) | undefined;
   let unsubscribeScreensaverConfigChanged: (() => void) | undefined;
-  let unsubscribeUnloadGame: (() => void) | undefined;
 
   onMount(() => {
     window.addEventListener("keydown", resetIdleTimer, true);
@@ -106,7 +101,6 @@
     unsubscribeInputActivity = window.rcade.onInputActivity(resetIdleTimer);
     unsubscribeScreensaverConfigChanged =
       window.rcade.onScreensaverConfigChanged(screensaverConfigChanged);
-    unsubscribeUnloadGame = window.rcade.onUnloadGame(unloadedGame);
     resetIdleTimer();
   });
 
@@ -117,7 +111,6 @@
     window.removeEventListener("keyup", resetIdleTimer, true);
     unsubscribeInputActivity?.();
     unsubscribeScreensaverConfigChanged?.();
-    unsubscribeUnloadGame?.();
   });
 </script>
 
