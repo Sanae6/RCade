@@ -52,7 +52,7 @@ export async function play_menu_move(): Promise<void> {
 
     // Map frequency to pitch: 0-20 calls/sec -> 0.85-1.15 playback rate
     // Uses a logarithmic-like curve for more natural feel
-    const basePitch = 0.85 + Math.min(callsPerSecond / 15, 2) * 0.3;
+    const basePitch = 0.45 + Math.min(callsPerSecond / 15, 2) * 0.3;
 
     // Add small random variation on top (±3%)
     const pitchVariation = basePitch + (Math.random() - 0.5) * 0.06;
