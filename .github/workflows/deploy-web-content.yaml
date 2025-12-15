@@ -1,0 +1,45 @@
+name: Deploy Web Content
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy-web-content.yaml'
+      - 'api/**'
+      - 'web-content/**'
+      - 'runtime/**'
+      - 'engine/**'
+      - 'log/**'
+      - 'bun.lock'
+      - 'package.json'
+
+env:
+  DO_NOT_TRACK: 1
+  TURBO_TELEMETRY_DISABLED: 1
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Web Content
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.3"
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build dependencies
+        run: bun run build --filter=web-content^...
+
+      - name: Deploy
+        run: bun run deploy
+        working-directory: web-content
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
