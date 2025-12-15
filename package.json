@@ -32,6 +32,11 @@
     "dev:web": "turbo dev --filter=@rcade/web",
     "dev:menu": "turbo dev --filter=@rcade/menu",
     "dev:cabinet": "turbo dev --filter=@rcade/client",
+    "build:cabinet-mac": "turbo build:cabinet-mac --filter=@rcade/client",
+    "build:cabinet-mac-x64": "turbo build:cabinet-mac-x64 --filter=@rcade/client",
+    "build:cabinet-mac-arm64": "turbo build:cabinet-mac-arm64 --filter=@rcade/client",
+    "build:cabinet-win": "turbo build:cabinet-win --filter=@rcade/client",
+    "build:cabinet-linux": "turbo build:cabinet-linux --filter=@rcade/client",
     "check": "turbo check",
     "prepare": "husky"
   },

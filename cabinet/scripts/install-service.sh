@@ -17,12 +17,13 @@ if [ ! -x "$BUN_PATH" ]; then
 fi
 
 echo "Building rcade cabinet..."
-cd "$PROJECT_DIR"
+MONOREPO_DIR="$(dirname "$PROJECT_DIR")"
+cd "$MONOREPO_DIR"
 
 # Clean old build artifacts to ensure fresh rebuild
 rm -rf "$PROJECT_DIR/release"
 
-"$BUN_PATH" run build:linux
+"$BUN_PATH" run turbo build:cabinet-linux --filter=@rcade/client
 
 # Find the AppImage
 APP_PATH=$(ls "$PROJECT_DIR"/release/rcade*.AppImage 2>/dev/null | head -1)

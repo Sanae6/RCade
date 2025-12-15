@@ -6,6 +6,31 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".svelte-kit/**"]
     },
+    "build:cabinet-mac": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "release/**"]
+    },
+    "build:cabinet-mac-x64": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "release/**"]
+    },
+    "build:cabinet-mac-arm64": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "release/**"]
+    },
+    "build:cabinet-win": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "release/**"]
+    },
+    "build:cabinet-linux": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": ["dist/**", "release/**"]
+    },
     "dev": {
       "dependsOn": ["^build"],
       "cache": false,
