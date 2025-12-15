@@ -1,6 +1,5 @@
 import { authHandle } from "$lib/auth";
 import type { Handle } from "@sveltejs/kit";
-import { redirect } from "@sveltejs/kit";
 import { sequence } from '@sveltejs/kit/hooks';
 
 const domainRedirectHandle: Handle = async ({ event, resolve }) => {
@@ -8,7 +7,10 @@ const domainRedirectHandle: Handle = async ({ event, resolve }) => {
     if (host?.includes('rcade.recurse.com')) {
         const url = new URL(event.request.url);
         url.host = 'rcade.dev';
-        redirect(302, url.toString());
+        return new Response(null, {
+            status: 302,
+            headers: { Location: url.toString() }
+        });
     }
     return resolve(event);
 };
