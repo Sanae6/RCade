@@ -3,7 +3,7 @@ import type { Handle } from "@sveltejs/kit";
 import { sequence } from '@sveltejs/kit/hooks';
 
 const domainRedirectHandle: Handle = async ({ event, resolve }) => {
-    const host = event.request.headers.get('host');
+    const host = event.request.headers.get('x-forwarded-host') ?? event.request.headers.get('host');
     if (host?.includes('rcade.recurse.com')) {
         const url = new URL(event.request.url);
         url.host = 'rcade.dev';
