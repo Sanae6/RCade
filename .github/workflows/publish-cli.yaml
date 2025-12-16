@@ -82,7 +82,7 @@ jobs:
           git add cli/package.json create/package.json bun.lock
           git commit -m "chore: bump cli versions to ${{ steps.bump.outputs.new_version }}"
           git tag "cli-v${{ steps.bump.outputs.new_version }}"
-          git push
+          git push --no-verify
           git push origin "cli-v${{ steps.bump.outputs.new_version }}"
 
   publish:

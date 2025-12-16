@@ -75,7 +75,7 @@ jobs:
           git add cabinet/package.json bun.lock
           git commit -m "chore: bump cabinet version to ${{ steps.bump.outputs.new_version }}"
           git tag "cabinet-v${{ steps.bump.outputs.new_version }}"
-          git push
+          git push --no-verify
           git push origin "cabinet-v${{ steps.bump.outputs.new_version }}"
 
   build-macos:
