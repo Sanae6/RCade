@@ -83,7 +83,7 @@ jobs:
           git commit -m "chore: bump cli versions to ${{ steps.bump.outputs.new_version }}"
           git tag "cli-v${{ steps.bump.outputs.new_version }}"
           git push --no-verify
-          git push origin "cli-v${{ steps.bump.outputs.new_version }}"
+          git push --no-verify origin "cli-v${{ steps.bump.outputs.new_version }}"
 
   publish:
     name: Publish ${{ matrix.package }}
