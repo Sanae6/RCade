@@ -373,7 +373,7 @@ function createWindow(): void {
   mainWindow.webContents.on("before-input-event", (_event, input) => {
     if (input.type === "keyDown") {
       mainWindow.webContents.send("input-activity");
-      if (input.type === "keyDown" && input.code === "Escape" && !args.noExit) {
+      if (input.type === "keyDown" && input.code === "Escape" && !args.noExit && !args.manifest) {
         mainWindow.webContents.send("menu-key-pressed");
       }
     }
