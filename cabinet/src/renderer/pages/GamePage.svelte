@@ -100,7 +100,9 @@
       }
 
       if (event.data.type === "quit") {
-        closeGame(event.data.options as QuitOptions | undefined);
+        if (!window.rcade.getArgs().noExit) {
+          closeGame(event.data.options as QuitOptions | undefined);
+        }
         return;
       }
 
