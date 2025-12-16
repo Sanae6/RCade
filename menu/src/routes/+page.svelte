@@ -47,7 +47,7 @@
         }
 
         // Read spinner delta (resets after read) and accumulate
-        accumulatedDelta += SPINNERS_P1.SPINNER.step_delta;
+        accumulatedDelta += SPINNERS_P1.SPINNER.consume_step_delta();
 
         // for every DELTA_EPSILON in delta, emit left/right move
         while (Math.abs(accumulatedDelta) >= DELTA_EPSILON) {

@@ -19,7 +19,7 @@ import { PLAYER_1, PLAYER_2 } from "@rcade/plugin-input-spinners";
 
 function gameLoop() {
   // Returns accumulated movement since last read, then resets to 0
-  const stepDelta = PLAYER_1.SPINNER.step_delta;
+  const stepDelta = PLAYER_1.SPINNER.consume_step_delta();
   paddleX += stepDelta * speed;
 
   requestAnimationFrame(gameLoop);
@@ -60,7 +60,7 @@ on("spin", ({ player, step_delta, step_resolution }) => {
 ```typescript
 {
   SPINNER: {
-    step_delta: number;
+    consume_step_delta(): number;
     step_resolution: number;
     angle: number;
     reset(): void;
@@ -68,7 +68,7 @@ on("spin", ({ player, step_delta, step_resolution }) => {
 }
 ```
 
-- `step_delta`: Accumulated movement since last read. Reading resets it to 0.
+- `consume_step_delta()`: Returns accumulated movement since last call, then resets to 0.
 - `step_resolution`: Encoder resolution (x steps per rotation).
 - `angle`: Cumulative angle in radians (automatically updated).
 - `reset()`: Resets the angle to 0.

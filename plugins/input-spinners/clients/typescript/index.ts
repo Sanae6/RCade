@@ -8,7 +8,8 @@ class Spinner {
     private _stepDelta = 0;
     private _angle = 0;
 
-    get step_delta() {
+    /** Returns accumulated step delta since last call, then resets to 0. */
+    consume_step_delta() {
         const d = this._stepDelta;
         this._stepDelta = 0;
         return d;
@@ -39,10 +40,10 @@ class Spinner {
 const spinner1 = new Spinner();
 const spinner2 = new Spinner();
 
-/** Spinner input for Player 1. Read `step_delta` each frame (resets after read). */
+/** Spinner input for Player 1. Call `consume_step_delta()` each frame (resets after read). */
 export const PLAYER_1 = { SPINNER: spinner1 };
 
-/** Spinner input for Player 2. Read `step_delta` each frame (resets after read). */
+/** Spinner input for Player 2. Call `consume_step_delta()` each frame (resets after read). */
 export const PLAYER_2 = { SPINNER: spinner2 };
 
 export const STATUS = { connected: false };

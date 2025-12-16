@@ -11,7 +11,7 @@ const SPINNER2_ANGLE: usize = 12;
 
 /// Controller for spinner input devices.
 ///
-/// Poll `step_delta(player)` each frame to get accumulated movement (resets after read).
+/// Poll `consume_step_delta(player)` each frame to get accumulated movement (resets after read).
 /// Use `step_resolution()` to convert steps to rotations.
 pub struct SpinnerController {
     runner: PluginSharedMemoryRunner,
@@ -30,7 +30,7 @@ impl SpinnerController {
     }
 
     /// Returns accumulated step delta since last call, then resets to 0.
-    pub fn step_delta(&self, player: u8) -> i16 {
+    pub fn consume_step_delta(&self, player: u8) -> i16 {
         let offset = match player {
             1 => SPINNER1_DELTA,
             2 => SPINNER2_DELTA,
